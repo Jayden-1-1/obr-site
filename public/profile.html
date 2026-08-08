@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль — О.Б.Р</title>
+  <link rel="icon" type="image/png" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main class="container">
+    <section class="section">
+      <div class="section-head">
+        <h2>Профиль и настройки</h2>
+        <div class="line"></div>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <div class="profile-hero reveal">
+        <div class="profile-av-wrap" id="avatar-wrap" title="Нажмите, чтобы сменить аватар">
+          <div id="avatar-preview" class="profile-avatar"></div>
+          <div class="profile-av-overlay">Сменить</div>
+          <input type="file" id="avatar-input" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp,image/avif" hidden>
+        </div>
+        <div class="profile-hero-info">
+          <div class="profile-name" id="p-username">—</div>
+          <div class="profile-role"><span class="role-badge" id="p-role">—</span></div>
+          <div class="profile-meta">
+            <span class="profile-meta-item">📧 <span id="p-email">—</span></span>
+            <span class="profile-meta-item">🗓 В отряде с <span id="p-created">—</span></span>
+          </div>
+          <div class="hint" style="margin-top:8px">Аватар виден в штатке, рапортах и заявках. Форматы PNG, JPG, GIF, WEBP, BMP, AVIF · до 5 МБ</div>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="panel settings-card reveal" style="--rd:100ms">
+          <div class="settings-card-head">
+            <span class="settings-icon">✎</span>
+            <h3>О себе</h3>
+          </div>
+          <p class="muted">Несколько слов о себе — это покажут рядом с вашим профилем.</p>
+          <textarea id="p-about" rows="4" maxlength="500" placeholder="Например: позывной, звание, чем занимаюсь…"></textarea>
+          <div class="form-actions">
+            <button id="p-about-save" class="btn primary">Сохранить</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" style="--rd:180ms">
+          <div class="settings-card-head">
+            <span class="settings-icon">@</span>
+            <h3>Сменить почту</h3>
+          </div>
+          <p class="muted">Почта используется для восстановления доступа.</p>
+          <div class="form-row">
+            <label>Новый email</label>
+            <input type="email" id="p-email-new" placeholder="you@example.com">
+          </div>
+          <div class="form-row">
+            <label>Пароль (для подтверждения)</label>
+            <input type="password" id="p-email-pass" placeholder="Введите пароль">
+          </div>
+          <div class="form-actions">
+            <button id="p-email-save" class="btn primary">Сменить почту</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" style="--rd:260ms">
+          <div class="settings-card-head">
+            <span class="settings-icon">🔒</span>
+            <h3>Сменить пароль</h3>
+          </div>
+          <p class="muted">Используйте не менее 6 символов.</p>
+          <div class="form-row">
+            <label>Текущий пароль</label>
+            <input type="password" id="p-pass-current">
+          </div>
+          <div class="form-row">
+            <label>Новый пароль</label>
+            <input type="password" id="p-pass-next" minlength="6">
+          </div>
+          <div class="form-actions">
+            <button id="p-pass-save" class="btn primary">Сменить пароль</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" style="--rd:320ms">
+          <div class="settings-card-head">
+            <span class="settings-icon">🛡</span>
+            <h3>Доп. безопасность</h3>
+          </div>
+          <p class="muted">Контрольный вопрос добавляет ещё один шаг при восстановлении пароля.</p>
+          <div id="sec-current" class="hint" style="display:none"></div>
+          <div class="form-row">
+            <label>Контрольный вопрос</label>
+            <select id="s-question"></select>
+          </div>
+          <div class="form-row">
+            <label>Кодовое слово (ответ)</label>
+            <input type="text" id="s-answer" maxlength="60" placeholder="Секретное слово">
+            <div class="hint">Запомните его — оно понадобится при восстановлении пароля</div>
+          </div>
+          <div class="form-row">
+            <label>Пароль (для подтверждения)</label>
+            <input type="password" id="s-password">
+          </div>
+          <div class="form-actions">
+            <button id="s-save" class="btn primary">Сохранить</button>
+            <button id="s-remove" class="btn danger" style="display:none">Отключить</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" id="discord-card" style="display:none">
+          <div class="settings-card-head">
+            <span class="settings-icon">🔗</span>
+            <h3>Discord</h3>
+          </div>
+          <p class="muted">Привяжите свой Discord — при принятии в отряд вы автоматически получите роль на сервере.</p>
+          <div id="discord-status" class="hint" style="margin-bottom:10px"></div>
+          <div class="form-actions">
+            <button id="discord-link" class="btn primary">Привязать Discord</button>
+            <button id="discord-unlink" class="btn" style="display:none">Отвязать</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" id="news-card" style="display:none">
+          <div class="settings-card-head">
+            <span class="settings-icon">📣</span>
+            <h3>Новостная строка</h3>
+          </div>
+          <p class="muted">Текст бегущей строки на главной странице — до 100 символов.</p>
+          <div class="form-row">
+            <label>Текст новости</label>
+            <input type="text" id="n-text" maxlength="100" placeholder="Например: Уважение к старшим по званию — закон!">
+            <div class="hint"><span id="n-count">0</span>/100</div>
+          </div>
+          <div class="form-actions">
+            <button id="n-save" class="btn primary">Сохранить</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" id="discord-config-card" style="display:none">
+          <div class="settings-card-head">
+            <span class="settings-icon">🤖</span>
+            <h3>Discord — бот и уведомления</h3>
+          </div>
+          <p class="muted">Создайте бота на <b>discord.com/developers</b>, пригласите его на сервер, затем заполните данные. Уведомления идут в канал через Webhook, роль при принятии выдаётся ботом.</p>
+          <div class="form-row">
+            <label>Client ID (приложение)</label>
+            <input type="text" id="dc-client-id" placeholder="123456789012345678">
+          </div>
+          <div class="form-row">
+            <label>Client Secret (OAuth2)</label>
+            <input type="password" id="dc-client-secret" placeholder="Введите для замены или оставьте пустым">
+          </div>
+          <div class="form-row">
+            <label>Токен бота</label>
+            <input type="password" id="dc-bot-token" placeholder="Введите для замены или оставьте пустым">
+          </div>
+          <div class="form-row">
+            <label>ID сервера (Guild ID)</label>
+            <input type="text" id="dc-guild-id" placeholder="123456789012345678">
+          </div>
+          <div class="form-row">
+            <label>ID роли при принятии</label>
+            <input type="text" id="dc-role-id" placeholder="123456789012345678 (через запятую — несколько ролей)">
+          </div>
+          <div class="form-row">
+            <label>Роль «Гражданский» (остаётся при увольнении)</label>
+            <input type="text" id="dc-role-civilian" placeholder="123456789012345678">
+          </div>
+          <div class="form-row">
+            <label>Роль «Билдер» (при одобрении заявки)</label>
+            <input type="text" id="dc-role-builder" placeholder="123456789012345678">
+          </div>
+          <div class="form-row">
+            <label>Webhook канала заявок (уведомления)</label>
+            <input type="text" id="dc-webhook" placeholder="https://discord.com/api/webhooks/...">
+          </div>
+          <div class="form-row">
+            <label>Webhook канала выговоров</label>
+            <input type="text" id="dc-webhook-warnings" placeholder="https://discord.com/api/webhooks/...">
+          </div>
+          <div class="hint" id="dc-config-status"></div>
+          <div class="form-actions">
+            <button id="dc-save" class="btn primary">Сохранить</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" id="sessions-card" style="--rd:280ms">
+          <div class="settings-card-head">
+            <span class="settings-icon">📱</span>
+            <h3>Устройства и сессии</h3>
+          </div>
+          <p class="muted">Список устройств, на которых выполнен вход. Если какое-то из них вам незнакомо — завершите его сессию.</p>
+          <div id="sessions-list" class="sessions-list"><div class="empty">Загрузка…</div></div>
+          <div class="form-actions">
+            <button id="sessions-logout-all" class="btn danger">Выйти на всех устройствах, кроме этого</button>
+          </div>
+        </div>
+
+        <div class="panel settings-card reveal" id="transfer-card" style="display:none">
+          <div class="settings-card-head">
+            <span class="settings-icon">⇄</span>
+            <h3>Передать права</h3>
+          </div>
+          <p class="muted">Передайте роль командира другому пользователю. Код подтверждения придёт на вашу почту.</p>
+          <div class="form-row">
+            <label>Логин пользователя</label>
+            <input type="text" id="t-username" maxlength="40" placeholder="Логин">
+          </div>
+          <div class="form-row" id="t-code-row" style="display:none">
+            <label>Код из письма</label>
+            <input type="text" id="t-code" maxlength="6" inputmode="numeric" placeholder="000000">
+          </div>
+          <div class="form-actions">
+            <button id="t-send" class="btn">Отправить код</button>
+            <button id="t-confirm" class="btn primary" style="display:none">Подтвердить и передать</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <a class="discord-icon" href="https://discord.gg/FAyaC5puP9" target="_blank" rel="noopener" title="Discord О.Б.Р" aria-label="Discord">
+        <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      </a>
+      <span>О.Б.Р — Отряд Быстрого Реагирования</span>
+    </div>
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/js/profile.js"></script>
+</body>
+</html>

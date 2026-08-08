@@ -1,0 +1,10 @@
+node_modules/
+
+# Runtime data (DB, uploads, конфиги с секретами)
+data/
+data-seed/
+
+# Логи и окружение
+*.log
+.env
+.env.local

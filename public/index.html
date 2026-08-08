@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>О.Б.Р — Отряд Быстрого Реагирования</title>
+  <link rel="icon" type="image/png" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <section class="hero">
+    <div class="container">
+      <img class="logo-big" src="/img/logo.png" alt="Логотип О.Б.Р">
+      <h1>О.Б.Р</h1>
+      <div class="subtitle">Отряд Быстрого Реагирования</div>
+    </div>
+  </section>
+
+  <main class="container">
+    <div id="alert" class="alert"></div>
+
+    <!-- Информация о фракции -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Информация о фракции</h2>
+        <div class="line"></div>
+        <button id="edit-desc-btn" class="btn small" style="display:none">Редактировать описание</button>
+      </div>
+
+      <div id="edit-desc-box" class="panel" style="display:none">
+        <h3>Описание фракции</h3>
+        <textarea id="desc-input" rows="8"></textarea>
+        <div class="form-actions">
+          <button id="save-desc-btn" class="btn primary">Сохранить</button>
+          <button id="cancel-desc-btn" class="btn">Отмена</button>
+        </div>
+      </div>
+
+      <div class="description-box reveal" id="faction-desc"></div>
+
+      <div class="cards" style="margin-top:20px">
+        <div class="card reveal" style="--rd:0ms">
+          <h3>Командир отряда</h3>
+          <div class="big-name" id="commander-name">—</div>
+        </div>
+        <div class="card reveal" style="--rd:90ms">
+          <h3>Заместитель командира</h3>
+          <div class="big-name" id="zam-name">—</div>
+        </div>
+        <div class="card reveal" style="--rd:180ms">
+          <h3>Состав</h3>
+          <div class="muted">Полное штатное расписание</div>
+          <div style="margin-top:10px"><a class="btn small" href="/roster.html">Открыть штатку</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Документация -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Документация фракции</h2>
+        <div class="line"></div>
+        <button id="add-doc-btn" class="btn small" style="display:none">Загрузить документ</button>
+      </div>
+
+      <div id="add-doc-box" class="panel" style="display:none">
+        <h3>Закрепить документ</h3>
+        <form id="doc-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Название документа</label>
+              <input type="text" id="doc-title" required maxlength="120" placeholder="Например: Устав О.Б.Р">
+            </div>
+            <div class="form-row">
+              <label>Доступ</label>
+              <select id="doc-access">
+                <option value="dsp">ДСП — доступно всем</option>
+                <option value="staff">Только для персонала</option>
+              </select>
+            </div>
+            <div class="form-row full">
+              <label>Описание (необязательно)</label>
+              <input type="text" id="doc-desc" maxlength="300" placeholder="Краткое описание документа">
+            </div>
+            <div class="form-row full">
+              <label>Файл (до 20 МБ)</label>
+              <input type="file" id="doc-file" required>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Закрепить</button>
+            <button type="button" id="cancel-doc-btn" class="btn">Отмена</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="docs-list" class="doc-list reveal">
+        <div class="empty">Загрузка документов…</div>
+      </div>
+    </section>
+
+    <!-- Заявления -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Заявления</h2>
+        <div class="line"></div>
+      </div>
+
+      <div id="join-box" class="panel reveal" style="display:none">
+        <h3>Заявка на вступление во фракцию О.Б.Р</h3>
+        <div class="app-intro">
+          <p>Уважаемые граждане, подавая заявку вы соглашаетесь соблюдать правила фракции, режима Town в котором базируется фракция, так же заполнять всё без грамматических ошибок иначе сразу отказ, после заполнения ожидайте решения руководства, хорошей службы.</p>
+          <p class="note"><strong>ПРИМЕЧАНИЕ:</strong> На должность Билдера можно подать только если вы состоите во фракции, в противном случае вам откажут.</p>
+        </div>
+        <form id="join-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Какой позывной? (пишите адекватный)</label>
+              <input type="text" id="j-callsign" required maxlength="40" placeholder="Позывной">
+            </div>
+            <div class="form-row">
+              <label>Сколько вам лет?</label>
+              <input type="text" id="j-age" required maxlength="10" placeholder="Например: 21">
+            </div>
+            <div class="form-row">
+              <label>Ваш юзер в Discord?</label>
+              <input type="text" id="j-discord" required maxlength="60" placeholder="Например: @username">
+            </div>
+            <div class="form-row full">
+              <label>Чем будете полезны во фракции?</label>
+              <input type="text" id="j-useful" required maxlength="500" placeholder="Чем можете помочь отряду">
+            </div>
+            <div class="form-row full">
+              <label>Расскажите о себе (3+ предложений)</label>
+              <textarea id="j-about" rows="4" required maxlength="1500" placeholder="Добрый, целеустремлённый, готов помогать во всём…"></textarea>
+            </div>
+            <div class="form-row">
+              <label>Соблюдать правила?</label>
+              <select id="j-rules">
+                <option value="Да">Да</option>
+                <option value="Нет">Нет</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Активити?</label>
+              <select id="j-active">
+                <option value="Да">Да</option>
+                <option value="Нет">Нет</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="join-submit" class="btn primary">Отправить заявку</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="leave-box" class="panel reveal" style="display:none">
+        <h3>Заявление об увольнении</h3>
+        <p class="muted">После одобрения вы будете убраны из штатного расписания.</p>
+        <textarea id="leave-text" rows="3" maxlength="2000" placeholder="Причина увольнения (необязательно)"></textarea>
+        <div class="form-actions">
+          <button id="leave-submit" class="btn danger">Отправить заявление</button>
+        </div>
+      </div>
+
+      <div id="builder-box" class="panel reveal" style="display:none">
+        <h3>Заявка на должность Билдера</h3>
+        <p class="muted">Доступна сотрудникам фракции. Прикрепите примеры ваших билдов (до 15 файлов) — это повысит шансы на одобрение.</p>
+        <form id="builder-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Ваш позывной во фракции?</label>
+              <input type="text" id="b-callsign" required maxlength="40" placeholder="Позывной">
+            </div>
+            <div class="form-row">
+              <label>Причина идти на билдера?</label>
+              <input type="text" id="b-reason" required maxlength="1500" placeholder="Почему хотите стать билдером">
+            </div>
+            <div class="form-row full">
+              <label>Насколько хорошо умеете строить, опишите.</label>
+              <textarea id="b-skill" rows="4" required maxlength="1500" placeholder="Опыт строительства, знание механик…"></textarea>
+            </div>
+            <div class="form-row full">
+              <label>Что вы строили и готовы ли показать билды?</label>
+              <textarea id="b-builds" rows="4" required maxlength="2000" placeholder="Опишите свои постройки…"></textarea>
+            </div>
+            <div class="form-row full">
+              <label>Файлы с примерами билдов (до 15)</label>
+              <input type="file" id="b-files" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,.svg,.avif,.zip,.doc,.docx,.pdf">
+              <div class="hint" id="b-files-hint">Файлы не выбраны</div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="builder-submit" class="btn primary">Отправить заявку</button>
+          </div>
+        </form>
+      </div>
+
+
+      <div id="login-hint" class="panel reveal" style="display:none">
+        <h3>Заявления</h3>
+        <p class="muted">Чтобы подать заявление о вступлении во фракцию, необходимо <a href="/login.html" style="color:var(--accent);font-weight:700">войти</a> или <a href="/register.html" style="color:var(--accent);font-weight:700">зарегистрироваться</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Модалка предпросмотра документа -->
+  <div class="modal-backdrop" id="preview-modal" style="display:none">
+    <div class="preview-modal">
+      <div class="preview-head">
+        <span id="preview-title"></span>
+        <button class="btn small" onclick="closePreview()">Закрыть</button>
+      </div>
+      <div class="preview-body" id="preview-body"></div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <a class="discord-icon" href="https://discord.gg/FAyaC5puP9" target="_blank" rel="noopener" title="Discord О.Б.Р" aria-label="Discord">
+        <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      </a>
+      <span>О.Б.Р — Отряд Быстрого Реагирования · Все права защищены</span>
+    </div>
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/js/index.js"></script>
+</body>
+</html>
+

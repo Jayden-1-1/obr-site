@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Штатное расписание — О.Б.Р</title>
+  <link rel="icon" type="image/png" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main class="container container-wide">
+    <section class="section">
+      <div class="section-head">
+        <h2>Штатное расписание</h2>
+        <div class="line"></div>
+        <input type="text" id="roster-search" class="search-input" placeholder="Поиск по позывному, номеру, должности…">
+        <button id="add-self-btn" class="btn small ok" style="display:none">Внести себя в штат</button>
+        <button id="add-roster-btn" class="btn primary small" style="display:none">Добавить сотрудника</button>
+      </div>
+
+      <div class="panel promo-panel reveal">
+        <button class="promo-toggle" onclick="this.parentElement.classList.toggle('open')">
+          <span>📜 Система повышений и порядок аттестации</span>
+          <span class="promo-arrow">▾</span>
+        </button>
+        <div class="promo-body">
+          <div class="promo-group">
+            <div class="promo-title">▰ МЛАДШИЙ НАЧАЛЬСТВУЮЩИЙ СОСТАВ ▰</div>
+            <div class="promo-ranks">Мл. лейтенант · Лейтенант · Ст. лейтенант · Капитан</div>
+          </div>
+          <div class="promo-group">
+            <div class="promo-title">▰ СТАРШИЙ НАЧАЛЬСТВУЮЩИЙ СОСТАВ ▰</div>
+            <div class="promo-ranks">Майор · Подполковник · Полковник</div>
+          </div>
+          <div class="promo-order">
+            <div class="promo-sub">📜 ПОРЯДОК ПОВЫШЕНИЯ 📜</div>
+            <ul>
+              <li><b>Лейтенант</b> — тесты на знание правил и строевой подготовки в идеальном исполнении.</li>
+              <li><b>Ст. лейтенант</b> — тесты: строевая подготовка (идеально) + уставы (пункты 1–5).</li>
+              <li><b>Капитан</b> — тесты: строевая подготовка (идеально), уставы (пункты 1–7).</li>
+              <li><b>Майор</b> — тесты: уставы (пункты 1–11).</li>
+              <li><b>Подполковник</b> — тесты: уставы (пункты 6–14), строевая подготовка (идеально), правила.</li>
+              <li><b>Полковник</b> — тесты: уставы (пункты 10–21), строевая подготовка (идеально), правила.</li>
+            </ul>
+          </div>
+          <div class="promo-note">При 3 выговорах командование может понизить сотрудника на одно звание по этой лестнице или отправить его на переаттестацию.</div>
+        </div>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <div class="roster-stats" id="roster-stats"></div>
+
+      <div class="table-wrap reveal">
+        <table class="roster-table">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Фото</th>
+              <th>Номер сотрудника</th>
+              <th>Позывной</th>
+              <th>Звание</th>
+              <th>Должность</th>
+              <th>Возраст</th>
+              <th>Discord</th>
+              <th>Выговоры</th>
+              <th>Статус</th>
+              <th id="actions-th" style="display:none">Действия</th>
+            </tr>
+          </thead>
+          <tbody id="roster-body">
+            <tr><td colspan="11" style="text-align:center;color:var(--text-faint)">Загрузка…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Модалка добавления/редактирования -->
+  <div class="modal-backdrop" id="roster-modal" style="display:none">
+    <div class="modal">
+      <h3 id="roster-modal-title">Добавить сотрудника</h3>
+      <div id="roster-modal-alert" class="alert"></div>
+      <form id="roster-form">
+        <div class="form-row">
+          <label>Номер сотрудника</label>
+          <input type="text" id="r-number" required maxlength="20" placeholder="Например: ОБР-001">
+        </div>
+        <div class="form-row">
+          <label>Позывной</label>
+          <input type="text" id="r-callsign" required maxlength="40" placeholder="Позывной">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Звание</label>
+            <select id="r-rank"></select>
+          </div>
+          <div class="form-row">
+            <label>Должность</label>
+            <select id="r-position"></select>
+          </div>
+          <div class="form-row">
+            <label>Возраст</label>
+            <input type="text" id="r-age" maxlength="10" placeholder="Например: 21">
+          </div>
+          <div class="form-row">
+            <label>Discord</label>
+            <input type="text" id="r-discord" maxlength="60" placeholder="@username">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Связанный аккаунт (необязательно)</label>
+          <select id="r-user"><option value="">— не привязывать —</option></select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Сохранить</button>
+          <button type="button" class="btn" onclick="closeRosterModal()">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Модалка выговора -->
+  <div class="modal-backdrop" id="warning-modal" style="display:none">
+    <div class="modal">
+      <h3 id="warning-modal-title">Выговор</h3>
+      <div id="warning-modal-alert" class="alert"></div>
+      <form id="warning-form">
+        <div class="form-row">
+          <label>Сотрудник</label>
+          <input type="text" id="w-callsign" readonly>
+        </div>
+        <div class="form-row">
+          <label>За что</label>
+          <textarea id="w-reason" rows="3" required maxlength="300" placeholder="Опишите причину выговора — нарушение, за которое назначается взыскание"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Срок действия — до какого числа</label>
+          <div class="date-input-wrap">
+            <svg class="mail-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+              <path d="M3 10h18M8 3v4M16 3v4"></path>
+            </svg>
+            <input type="text" id="w-until" readonly placeholder="Выберите дату в календаре" required>
+          </div>
+          <div class="hint">По истечении срока выговор автоматически считается отбытым</div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Вынести выговор</button>
+          <button type="button" class="btn" onclick="closeWarningModal()">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Модалка отпуска -->
+  <div class="modal-backdrop" id="vacation-modal" style="display:none">
+    <div class="modal">
+      <h3 id="vacation-modal-title">Отпуск</h3>
+      <div id="vacation-modal-alert" class="alert"></div>
+      <form id="vacation-form">
+        <div class="form-row">
+          <label>Сотрудник</label>
+          <input type="text" id="v-callsign" readonly>
+        </div>
+        <div class="form-row">
+          <label>Причина отпуска</label>
+          <textarea id="v-reason" rows="3" required maxlength="300" placeholder="Например: отпуск по семейным обстоятельствам"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Дата возвращения — до какого числа</label>
+          <div class="date-input-wrap">
+            <svg class="mail-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+              <path d="M3 10h18M8 3v4M16 3v4"></path>
+            </svg>
+            <input type="text" id="v-until" readonly placeholder="Выберите дату в календаре" required>
+          </div>
+          <div class="hint">По истечении срока отпуск автоматически завершается, роль снимается</div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Оформить отпуск</button>
+          <button type="button" class="btn" onclick="closeVacationModal()">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <a class="discord-icon" href="https://discord.gg/FAyaC5puP9" target="_blank" rel="noopener" title="Discord О.Б.Р" aria-label="Discord">
+        <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      </a>
+      <span>О.Б.Р — Отряд Быстрого Реагирования</span>
+    </div>
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/js/roster.js"></script>
+</body>
+</html>

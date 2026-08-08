@@ -1,0 +1,21 @@
+{
+  "name": "obr-site",
+  "version": "1.0.0",
+  "description": "Сайт фракции О.Б.Р - Отряд Быстрого Реагирования",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "mammoth": "^1.12.0",
+    "multer": "^2.0.0",
+    "nodemailer": "^9.0.3"
+  }
+}
