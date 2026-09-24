@@ -1,4 +1,8 @@
-const nodemailer = require('nodemailer');
+let nodemailer = null;
+try {
+  nodemailer = require('nodemailer');
+} catch (_) {}
+
 const fs = require('fs');
 const path = require('path');
 
@@ -31,7 +35,7 @@ function loadConfig() {
 function isConfigured() {
   const cfg = loadConfig();
   if (cfg.provider === 'brevo') return !!cfg.apiKey;
-  return !!(cfg && cfg.user && cfg.pass);
+  return !!(nodemailer && cfg && cfg.user && cfg.pass);
 }
 
 const MESSAGES = {
@@ -101,7 +105,7 @@ async function sendCode(to, code, purpose = 'register') {
     return { dev: false };
   }
 
-  if (!cfg || !cfg.user || !cfg.pass) {
+  if (!nodemailer || !cfg || !cfg.user || !cfg.pass) {
     console.log(`[ПОЧТА НЕ НАСТРОЕНА] Код для ${to}: ${code} (${purpose})`);
     return { dev: true, code };
   }

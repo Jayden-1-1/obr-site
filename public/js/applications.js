@@ -176,44 +176,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ---------- Одобрение увольнения ----------
   window.approveLeave = async (id) => {
-    if (!confirm('Одобрить увольнение? Сотрудник будет убран из штатного расписания.')) return;
+    const ok = await showConfirmModal({
+      title: 'Одобрение увольнения',
+      message: 'Одобрить увольнение? Сотрудник будет исключён из штатного расписания.',
+      confirmText: 'Одобрить увольнение',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/applications/${id}/approve`, { method: 'POST' });
       await load();
-      showAlert(alertEl, 'ok', 'Увольнение одобрено, сотрудник убран из штатки');
+      showToast('ok', 'Увольнение одобрено, сотрудник убран из штатного расписания');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   };
 
   window.rejectApp = async (id) => {
-    if (!confirm('Отклонить заявку?')) return;
+    const ok = await showConfirmModal({
+      title: 'Отклонение заявки',
+      message: 'Вы уверены, что хотите отклонить эту заявку?',
+      confirmText: 'Отклонить',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/applications/${id}/reject`, { method: 'POST' });
       await load();
+      showToast('info', 'Заявка отклонена');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   };
 
   window.approveBuilder = async (id) => {
-    if (!confirm('Одобрить заявку на билдера? Сотрудник получит роль Билдера в Discord.')) return;
+    const ok = await showConfirmModal({
+      title: 'Одобрение заявки на билдера',
+      message: 'Одобрить заявку на билдера? Сотрудник получит роль Билдера в Discord.',
+      confirmText: 'Одобрить',
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/applications/${id}/approve`, { method: 'POST' });
       await load();
-      showAlert(alertEl, 'ok', 'Заявка одобрена, сотрудник назначен Билдером');
+      showToast('ok', 'Заявка одобрена, сотрудник назначен Билдером');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   };
 
   window.deleteApp = async (id) => {
-    if (!confirm('Удалить заявку безвозвратно?')) return;
+    const ok = await showConfirmModal({
+      title: 'Удаление заявки',
+      message: 'Удалить заявку безвозвратно?',
+      confirmText: 'Удалить',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/applications/${id}`, { method: 'DELETE' });
       await load();
+      showToast('ok', 'Заявка удалена');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   };
 

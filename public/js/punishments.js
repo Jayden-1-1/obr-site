@@ -85,12 +85,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   window.removePunishment = async (id) => {
-    if (!confirm('Снять это наказание? Выговор у сотрудника будет убран.')) return;
+    const ok = await showConfirmModal({
+      title: 'Снятие наказания',
+      message: 'Снять это наказание? Выговор у сотрудника в личном деле будет аннулирован.',
+      confirmText: 'Снять наказание',
+      danger: false,
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/punishments/${id}/remove`, { method: 'POST' });
       await load();
+      showToast('ok', 'Наказание успешно снято');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   };
 

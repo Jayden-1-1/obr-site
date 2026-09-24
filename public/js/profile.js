@@ -153,7 +153,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   secRemove.addEventListener('click', async () => {
-    if (!confirm('Отключить контрольный вопрос?')) return;
+    const ok = await showConfirmModal({
+      title: 'Отключение контрольного вопроса',
+      message: 'Вы уверены, что хотите отключить контрольный вопрос для восстановления?',
+      confirmText: 'Отключить вопрос',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const data = await apiFetch('/api/users/me/security', {
         method: 'POST',
@@ -163,9 +169,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       user.has_security = data.user.has_security;
       user.security_question = data.user.security_question;
       renderSecurity();
-      showAlert(alertEl, 'ok', 'Контрольный вопрос отключён');
+      showToast('ok', 'Контрольный вопрос отключён');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   });
 
@@ -236,13 +242,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   discordUnlinkBtn.addEventListener('click', async () => {
-    if (!confirm('Отвязать Discord?')) return;
+    const ok = await showConfirmModal({
+      title: 'Отвязка Discord',
+      message: 'Вы уверены, что хотите отвязать текущую учётную запись Discord?',
+      confirmText: 'Отвязать Discord',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch('/api/discord/unlink', { method: 'POST' });
       await loadDiscordStatus();
-      showAlert(alertEl, 'ok', 'Discord отвязан');
+      showToast('ok', 'Discord успешно отвязан');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   });
 
@@ -285,13 +297,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         : '<div class="empty">Активных сессий на других устройствах нет</div>';
       sessionsList.querySelectorAll('button[data-sid]').forEach((btn) => {
         btn.addEventListener('click', async () => {
-          if (!confirm('Выйти с этого устройства?')) return;
+          const ok = await showConfirmModal({
+            title: 'Завершение сессии',
+            message: 'Завершить сессию на этом устройстве?',
+            confirmText: 'Завершить',
+            danger: true,
+          });
+          if (!ok) return;
           try {
             await apiFetch(`/api/sessions/${encodeURIComponent(btn.getAttribute('data-sid'))}`, { method: 'DELETE' });
-            showAlert(alertEl, 'ok', 'Сессия завершена');
+            showToast('ok', 'Сессия завершена');
             await loadSessions();
           } catch (e) {
-            showAlert(alertEl, 'err', e.message);
+            showToast('err', e.message);
           }
         });
       });
@@ -301,13 +319,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   sessionsLogoutAll.addEventListener('click', async () => {
-    if (!confirm('Выйти на всех устройствах, кроме этого?')) return;
+    const ok = await showConfirmModal({
+      title: 'Завершение всех остальных сессий',
+      message: 'Вы уверены, что хотите выйти на всех устройствах, кроме текущего?',
+      confirmText: 'Выйти на всех остальных',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const data = await apiFetch('/api/sessions/logout-others', { method: 'POST' });
-      showAlert(alertEl, 'ok', data.removed ? `Завершено сессий: ${data.removed}` : 'Других активных сессий нет');
+      showToast('ok', data.removed ? `Завершено сессий: ${data.removed}` : 'Других активных сессий нет');
       await loadSessions();
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   });
 

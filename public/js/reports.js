@@ -232,12 +232,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   window.deleteReport = async (id) => {
-    if (!confirm('Удалить рапорт?')) return;
+    const ok = await showConfirmModal({
+      title: 'Удаление рапорта',
+      message: 'Вы действительно хотите удалить этот рапорт?',
+      confirmText: 'Удалить рапорт',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/reports/${id}`, { method: 'DELETE' });
       await load();
+      showToast('ok', 'Рапорт удалён');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   };
 

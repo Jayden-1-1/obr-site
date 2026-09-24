@@ -70,14 +70,118 @@ function roleClass(role) {
   return ['staff', 'zam', 'commander'].includes(role) ? role : '';
 }
 
+/* ---------- Уведомления (Alerts & Toasts) ---------- */
 function showAlert(el, type, text) {
+  if (!el) return;
   el.className = `alert ${type} show`;
   el.textContent = text;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function clearAlert(el) {
+  if (!el) return;
   el.className = 'alert';
   el.textContent = '';
+}
+
+function showToast(type, text, duration = 4000) {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+
+  const iconMap = {
+    ok: '✓',
+    err: '✕',
+    info: 'ℹ',
+    warn: '⚠',
+  };
+
+  toast.innerHTML = `
+    <span class="toast-icon">${iconMap[type] || 'ℹ'}</span>
+    <span class="toast-msg">${esc(text)}</span>
+    <button type="button" class="toast-close" aria-label="Закрыть">×</button>
+    <div class="toast-progress" style="animation-duration:${duration}ms"></div>
+  `;
+
+  container.appendChild(toast);
+
+  const remove = () => {
+    toast.classList.add('toast-leave');
+    setTimeout(() => toast.remove(), 250);
+  };
+
+  const timer = setTimeout(remove, duration);
+  toast.querySelector('.toast-close').addEventListener('click', () => {
+    clearTimeout(timer);
+    remove();
+  });
+}
+
+/* ---------- Тактическое модальное окно подтверждения ---------- */
+function showConfirmModal({
+  title = 'Подтверждение действия',
+  message = 'Вы уверены, что хотите продолжить?',
+  confirmText = 'Подтвердить',
+  cancelText = 'Отмена',
+  danger = false,
+} = {}) {
+  return new Promise((resolve) => {
+    let modalEl = document.getElementById('app-confirm-modal');
+    if (!modalEl) {
+      modalEl = document.createElement('div');
+      modalEl.id = 'app-confirm-modal';
+      modalEl.className = 'modal-backdrop confirm-backdrop';
+      document.body.appendChild(modalEl);
+    }
+
+    modalEl.innerHTML = `
+      <div class="modal confirm-modal" role="dialog" aria-modal="true">
+        <div class="confirm-head">
+          <div class="confirm-badge">${danger ? 'ВНИМАНИЕ' : 'ДЕЙСТВИЕ'}</div>
+          <h3>${esc(title)}</h3>
+        </div>
+        <div class="confirm-body">
+          <p>${esc(message)}</p>
+        </div>
+        <div class="confirm-actions">
+          <button type="button" class="btn" id="confirm-cancel-btn">${esc(cancelText)}</button>
+          <button type="button" class="btn ${danger ? 'danger' : 'primary'}" id="confirm-ok-btn">${esc(confirmText)}</button>
+        </div>
+      </div>
+    `;
+
+    modalEl.style.display = 'flex';
+    setTimeout(() => modalEl.classList.add('in'), 10);
+
+    const cleanup = (result) => {
+      modalEl.classList.remove('in');
+      setTimeout(() => {
+        modalEl.style.display = 'none';
+        modalEl.innerHTML = '';
+        resolve(result);
+      }, 200);
+      document.removeEventListener('keydown', onKey);
+    };
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') cleanup(false);
+      if (e.key === 'Enter') cleanup(true);
+    };
+
+    document.addEventListener('keydown', onKey);
+    document.getElementById('confirm-cancel-btn').addEventListener('click', () => cleanup(false));
+    document.getElementById('confirm-ok-btn').addEventListener('click', () => cleanup(true));
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) cleanup(false);
+    });
+  });
 }
 
 function optionsHtml(list, selected) {
@@ -88,7 +192,7 @@ function optionsHtml(list, selected) {
 
 function avatarImg(userId, stored, name, size = 38) {
   if (stored && userId) {
-    return `<img class="avatar" src="/api/users/${userId}/avatar" alt="${esc(name || '')}" width="${size}" height="${size}">`;
+    return `<img class="avatar" src="/api/users/${userId}/avatar" alt="${esc(name || '')}" width="${size}" height="${size}" loading="lazy">`;
   }
   return `<span class="avatar avatar-empty" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px">${esc((name || '?').slice(0, 1).toUpperCase())}</span>`;
 }
@@ -96,10 +200,12 @@ function avatarImg(userId, stored, name, size = 38) {
 function avatarInline(owner, size = 28) {
   const name = owner.username || owner.callsign || '?';
   if (owner.user_id && owner.avatar) {
-    return `<img class="avatar avatar-inline" src="/api/users/${owner.user_id}/avatar" alt="${esc(name)}" width="${size}" height="${size}">`;
+    return `<img class="avatar avatar-inline" src="/api/users/${owner.user_id}/avatar" alt="${esc(name)}" width="${size}" height="${size}" loading="lazy">`;
   }
   return `<span class="avatar avatar-empty avatar-inline" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.45)}px">${esc(name.slice(0, 1).toUpperCase())}</span>`;
 }
+
+let __headerActive = null;
 
 async function initHeader(active) {
   __headerActive = active;
@@ -129,7 +235,7 @@ async function initHeader(active) {
     userHtml = `
       <div class="user-box">
         <a class="user-chip" href="/profile.html" title="Настройки профиля">
-          ${avatarImg(user.id, user.avatar, user.username, 38)}
+          ${avatarImg(user.id, user.avatar, user.username, 36)}
           <div class="who">
             <div class="name">${esc(user.username)}</div>
             <div class="role">${esc(SITE.roleLabels[user.role] || user.role)}</div>
@@ -147,22 +253,39 @@ async function initHeader(active) {
 
   const header = document.getElementById('site-header');
   if (header) {
+    header.className = 'site-header';
     header.innerHTML = `
-      <div class="header-inner">
+      <div class="header-inner" id="header-inner">
         <a class="brand" href="/">
           <img class="logo" src="/img/logo.png" alt="О.Б.Р">
           <div class="title">${esc(SITE.short)}<small>Отряд Быстрого Реагирования</small></div>
         </a>
-        <nav class="main-nav">${navHtml}</nav>
+        <nav class="main-nav" id="main-nav">${navHtml}</nav>
         ${userHtml}
+        <button type="button" class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Открыть меню">
+          <span></span><span></span><span></span>
+        </button>
       </div>`;
+
+    const toggle = document.getElementById('mobile-nav-toggle');
+    const inner = document.getElementById('header-inner');
+    if (toggle && inner) {
+      toggle.addEventListener('click', () => {
+        inner.classList.toggle('nav-open');
+      });
+      document.addEventListener('click', (e) => {
+        if (!inner.contains(e.target) && inner.classList.contains('nav-open')) {
+          inner.classList.remove('nav-open');
+        }
+      });
+    }
 
     if (!document.getElementById('news-ticker')) {
       header.insertAdjacentHTML(
         'afterend',
         `
         <div class="news-ticker header-ticker" id="news-ticker" style="display:none">
-          <div class="news-label">НОВОСТИ</div>
+          <div class="news-label">СВОДКА</div>
           <div class="news-track-wrap">
             <div class="news-track" id="news-track"></div>
           </div>
@@ -203,8 +326,6 @@ async function initNewsTicker() {
   }
 }
 
-let __headerActive = null;
-
 async function refreshHeaderUser() {
   await initHeader(__headerActive);
 }
@@ -221,7 +342,7 @@ function initReveal() {
         }
       }
     },
-    { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
   );
   const scan = () =>
     document.querySelectorAll('.reveal:not(.in)').forEach((el) => io.observe(el));
@@ -262,9 +383,7 @@ function initDeveloperBadge() {
 async function doLogout() {
   try {
     await apiFetch('/api/auth/logout', { method: 'POST' });
-  } catch (_) {
-    /* сеть недоступна — всё равно разлогиниваемся локально */
-  }
+  } catch (_) {}
   window.location.href = '/';
 }
 
@@ -366,8 +485,8 @@ function attachDatePicker(input, opts = {}) {
   function position(r) {
     if (!__dpPopup) return;
     __dpPopup.style.visibility = 'hidden';
-    const pw = __dpPopup.offsetWidth;
-    const ph = __dpPopup.offsetHeight;
+    const pw = __dpPopup.offsetWidth || 280;
+    const ph = __dpPopup.offsetHeight || 260;
     let top = r.bottom + 6;
     let left = r.left;
     if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
@@ -383,7 +502,7 @@ function attachDatePicker(input, opts = {}) {
     const parts = (toISO(input.value) || iso(today)).split('-');
     const view = { y: +parts[0], m: +parts[1] - 1 };
     __dpPopup = document.createElement('div');
-    __dpPopup.className = 'datepicker-pop';
+    __dpPopup.className = 'datepicker-pop in';
     render(view);
     document.body.appendChild(__dpPopup);
     position(input.getBoundingClientRect());

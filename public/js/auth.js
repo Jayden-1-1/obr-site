@@ -20,21 +20,48 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loginForm = page === 'login' ? document.getElementById('auth-form') : null;
 
   let discordDone = false;
+  let discordRequired = true;
   const registerBtn = document.getElementById('register-btn');
 
   function updateRegisterBtn() {
     if (!registerBtn) return;
+    const u = document.getElementById('a-username')?.value.trim() || '';
+    const p1 = document.getElementById('a-password')?.value || '';
+    const p2 = document.getElementById('a-password2')?.value || '';
     const ready =
-      discordDone &&
-      document.getElementById('a-username').value.trim() &&
-      document.getElementById('a-password').value.length >= 6 &&
-      document.getElementById('a-password2').value.length >= 6;
+      (!discordRequired || discordDone) &&
+      u.length >= 3 &&
+      p1.length >= 6 &&
+      p2.length >= 6 &&
+      p1 === p2;
     registerBtn.disabled = !ready;
   }
 
   if (registerForm) {
+    // Check registration requirements
+    try {
+      const regCfg = await apiFetch('/api/auth/register-config');
+      discordRequired = !!regCfg.discordRequired;
+      if (!discordRequired) {
+        const discordBox = document.getElementById('discord-box');
+        const discordHint = document.getElementById('discord-hint');
+        if (discordHint) {
+          discordHint.textContent = 'Привязка Discord в данный момент не требуется';
+        }
+        if (discordBox) {
+          const btn = document.getElementById('discord-btn');
+          if (btn) btn.style.display = 'none';
+        }
+      }
+    } catch (_) {
+      discordRequired = false;
+    }
+
     for (const id of ['a-username', 'a-password', 'a-password2']) {
-      document.getElementById(id).addEventListener('input', updateRegisterBtn);
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', updateRegisterBtn);
+      }
     }
 
     const discordBtn = document.getElementById('discord-btn');
@@ -83,6 +110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     }
+
+    updateRegisterBtn();
   }
 
   registerForm?.addEventListener('submit', async (e) => {
@@ -98,15 +127,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     registerBtn.disabled = true;
+    const originalText = registerBtn.textContent;
+    registerBtn.textContent = 'Регистрация…';
+
     try {
       await apiFetch('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       });
-      window.location.href = next;
+      showToast('ok', 'Регистрация успешна! Добро пожаловать.');
+      setTimeout(() => {
+        window.location.href = next;
+      }, 500);
     } catch (err) {
       showAlert(alertEl, 'err', err.message);
       registerBtn.disabled = false;
+      registerBtn.textContent = originalText;
     }
   });
 
@@ -118,15 +154,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Вход…';
+
     try {
       await apiFetch('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       });
-      window.location.href = next;
+      showToast('ok', 'Вход выполнен!');
+      setTimeout(() => {
+        window.location.href = next;
+      }, 500);
     } catch (err) {
       showAlert(alertEl, 'err', err.message);
       btn.disabled = false;
+      btn.textContent = originalText;
     }
   });
 });

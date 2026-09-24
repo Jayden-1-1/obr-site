@@ -71,9 +71,16 @@ async function toggleStatus(id) {
   const row = document.querySelector(`[data-row-id="${id}"]`);
   const status = row ? row.dataset.status : '';
   const action = status === 'active' ? 'уволить' : 'вернуть в строй';
-  if (!confirm(`Подтвердить: ${action} сотрудника?`)) return;
+  const ok = await showConfirmModal({
+    title: status === 'active' ? 'Увольнение сотрудника' : 'Возвращение в строй',
+    message: `Подтвердите действие: ${action} сотрудника?`,
+    confirmText: status === 'active' ? 'Уволить' : 'Вернуть',
+    danger: status === 'active',
+  });
+  if (!ok) return;
   try {
     await apiFetch(`/api/roster/${id}/toggle-status`, { method: 'POST' });
+    showToast('ok', `Статус сотрудника изменён (${action})`);
     await load();
   } catch (e) {
     showAlert(document.getElementById('alert'), 'err', e.message);
@@ -81,9 +88,16 @@ async function toggleStatus(id) {
 }
 
 async function deleteRoster(id) {
-  if (!confirm('Удалить запись из штатного расписания?')) return;
+  const ok = await showConfirmModal({
+    title: 'Удаление из штата',
+    message: 'Удалить запись из штатного расписания? Это действие необратимо.',
+    confirmText: 'Удалить',
+    danger: true,
+  });
+  if (!ok) return;
   try {
     await apiFetch(`/api/roster/${id}`, { method: 'DELETE' });
+    showToast('ok', 'Сотрудник удалён из штата');
     await load();
   } catch (e) {
     showAlert(document.getElementById('alert'), 'err', e.message);
@@ -113,15 +127,22 @@ function submitWarning() {
   })
     .then(async () => {
       closeWarningModal();
+      showToast('warn', 'Выговор вынесен');
       await load();
     })
     .catch((e) => showAlert(alertEl, 'err', e.message));
 }
 
 async function removeWarning(id) {
-  if (!confirm('Снять выговор?')) return;
+  const ok = await showConfirmModal({
+    title: 'Снятие выговора',
+    message: 'Снять выговор у данного сотрудника?',
+    confirmText: 'Снять выговор',
+  });
+  if (!ok) return;
   try {
     await apiFetch(`/api/roster/${id}/unwarning`, { method: 'POST' });
+    showToast('ok', 'Выговор снят');
     await load();
   } catch (e) {
     showAlert(document.getElementById('alert'), 'err', e.message);
@@ -129,9 +150,16 @@ async function removeWarning(id) {
 }
 
 async function demoteRoster(id, rank) {
-  if (!confirm(`Понизить сотрудника с звания «${rank}» на одно звание вниз?`)) return;
+  const ok = await showConfirmModal({
+    title: 'Понижение в звании',
+    message: `Понизить сотрудника со звания «${rank}» на одно звание вниз? Выговоры будут сброшены.`,
+    confirmText: 'Понизить',
+    danger: true,
+  });
+  if (!ok) return;
   try {
     await apiFetch(`/api/roster/${id}/demote`, { method: 'POST' });
+    showToast('warn', 'Сотрудник понижен в звании');
     await load();
   } catch (e) {
     showAlert(document.getElementById('alert'), 'err', e.message);
@@ -139,9 +167,16 @@ async function demoteRoster(id, rank) {
 }
 
 async function recertRoster(id) {
-  if (!confirm('Отправить сотрудника на переаттестацию? Выговоры будут сняты.')) return;
+  const ok = await showConfirmModal({
+    title: 'Переаттестация',
+    message: 'Отправить сотрудника на переаттестацию? Все текущие выговоры будут сняты.',
+    confirmText: 'На переаттестацию',
+    danger: true,
+  });
+  if (!ok) return;
   try {
     await apiFetch(`/api/roster/${id}/recert`, { method: 'POST' });
+    showToast('info', 'Сотрудник отправлен на переаттестацию');
     await load();
   } catch (e) {
     showAlert(document.getElementById('alert'), 'err', e.message);
@@ -149,9 +184,15 @@ async function recertRoster(id) {
 }
 
 async function recertClear(id) {
-  if (!confirm('Отметить переаттестацию пройденной?')) return;
+  const ok = await showConfirmModal({
+    title: 'Завершение аттестации',
+    message: 'Отметить переаттестацию пройденной?',
+    confirmText: 'Пройдена',
+  });
+  if (!ok) return;
   try {
     await apiFetch(`/api/roster/${id}/recert-clear`, { method: 'POST' });
+    showToast('ok', 'Переаттестация успешно пройдена');
     await load();
   } catch (e) {
     showAlert(document.getElementById('alert'), 'err', e.message);
@@ -228,9 +269,15 @@ function submitVacation() {
 }
 
 async function endVacation(id) {
-  if (!confirm('Завершить отпуск? Роль отпуска будет снята.')) return;
+  const ok = await showConfirmModal({
+    title: 'Завершение отпуска',
+    message: 'Завершить отпуск досрочно? Роль отпуска будет снята.',
+    confirmText: 'Завершить',
+  });
+  if (!ok) return;
   try {
     await apiFetch(`/api/roster/${id}/end-vacation`, { method: 'POST' });
+    showToast('ok', 'Отпуск сотрудника завершён');
     await load();
   } catch (e) {
     showAlert(document.getElementById('alert'), 'err', e.message);
@@ -262,7 +309,7 @@ function render() {
     : rosterData;
 
   if (!list.length) {
-    body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-faint)">${
+    body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--faint)">${
       rosterData.length ? 'Ничего не найдено' : 'Штат пуст'
     }</td></tr>`;
     return;

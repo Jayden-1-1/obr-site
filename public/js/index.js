@@ -198,12 +198,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadDocs();
 
   window.deleteDoc = async (id) => {
-    if (!confirm('Удалить документ?')) return;
+    const ok = await showConfirmModal({
+      title: 'Удаление документа',
+      message: 'Удалить этот нормативный документ?',
+      confirmText: 'Удалить',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/documents/${id}`, { method: 'DELETE' });
       await loadDocs();
+      showToast('ok', 'Документ удалён');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   };
 
@@ -318,17 +325,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('leave-submit').addEventListener('click', async () => {
-    if (!confirm('Отправить заявление об увольнении?')) return;
+    const ok = await showConfirmModal({
+      title: 'Рапорт об увольнении',
+      message: 'Вы уверены, что хотите подать заявление об увольнении из отряда?',
+      confirmText: 'Подать заявление',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch('/api/applications', {
         method: 'POST',
         body: JSON.stringify({ type: 'leave', text: document.getElementById('leave-text').value }),
       });
-      showAlert(alertEl, 'ok', 'Заявление об увольнении отправлено.');
+      showToast('ok', 'Заявление об увольнении успешно отправлено');
       document.getElementById('leave-text').value = '';
       leaveBox.style.display = 'none';
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      showToast('err', e.message);
     }
   });
 });
