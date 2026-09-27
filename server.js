@@ -147,8 +147,19 @@ try {
 
 // Start Server
 if (require.main === module) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`О.Б.Р — сайт запущен: http://localhost:${PORT}`);
+  });
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && !process.env.PORT) {
+      const fallbackPort = 3001;
+      console.warn(`[SERVER] Порт ${PORT} занят. Переключаемся на резервный порт ${fallbackPort}...`);
+      app.listen(fallbackPort, () => {
+        console.log(`О.Б.Р — сайт запущен: http://localhost:${fallbackPort}`);
+      });
+    } else {
+      console.error('[SERVER] Ошибка запуска сервера:', err);
+    }
   });
 }
 
