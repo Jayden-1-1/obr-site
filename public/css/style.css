@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #0b0b0d;
   --bg-soft: #101013;
   --panel: #16161a;
@@ -250,30 +250,39 @@ a:hover { color: var(--accent); }
 .btn.small { padding: 5px 11px; font-size: 12.5px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ---------- Герой-блок ---------- */
-.hero {
-  background:
-    linear-gradient(180deg, rgba(11,11,13,0.82), rgba(11,11,13,0.94)),
-    url("/img/fon.jpg") center / cover no-repeat,
-    var(--bg-soft);
-  border-bottom: 1px solid var(--border);
-  padding: 60px 0 52px;
-  text-align: center;
+/* ---------- Главный баннер (Hero Banner) ---------- */
+.hero-banner {
+  background: var(--bg);
+  padding: 24px 0 10px;
 }
 
-.hero .logo-big { width: 150px; height: auto; margin-bottom: 0; }
-
-.hero h1 {
-  margin: 0 0 6px;
-  font-size: 34px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+.hero-banner .container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
-.hero .subtitle {
-  color: var(--text-dim);
-  font-size: 16px;
-  letter-spacing: 0.3px;
+.banner-card {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #000;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6);
+}
+
+.banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+@media (max-width: 720px) {
+  .hero-banner {
+    padding: 14px 0 6px;
+  }
 }
 
 /* ---------- Секции ---------- */
