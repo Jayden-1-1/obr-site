@@ -13,7 +13,7 @@ const {
   dropTrackedSession,
 } = require('../middleware/auth');
 const { upload, AVATAR_MIME } = require('../middleware/upload');
-const { EMAIL_RE, SECURITY_QUESTIONS, normalizeAnswer } = require('../services/codeService');
+const { SECURITY_QUESTIONS, normalizeAnswer } = require('../services/codeService');
 
 const router = express.Router();
 const AVATAR_MAX = 5 * 1024 * 1024;
@@ -67,26 +67,6 @@ router.get('/:id/avatar', (req, res) => {
   res.setHeader('Cache-Control', 'private, max-age=300');
   fs.createReadStream(filePath).pipe(res);
 });
-
-// Update email
-router.post(
-  '/me/email',
-  requireAuth,
-  api((req, res) => {
-    const email = String(req.body.email || '').trim().toLowerCase().slice(0, 255);
-    const password = String(req.body.password || '');
-    if (!EMAIL_RE.test(email)) return fail(res, 400, 'Введите корректный email');
-    if (!password || !bcrypt.compareSync(password, req.user.password_hash)) {
-      return fail(res, 400, 'Неверный пароль');
-    }
-    const dup = db
-      .prepare('SELECT id FROM users WHERE email = ? AND id != ?')
-      .get(email, req.user.id);
-    if (dup) return fail(res, 409, 'Этот email уже используется');
-    db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, req.user.id);
-    res.json({ user: publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id)) });
-  })
-);
 
 // Change password
 router.post(

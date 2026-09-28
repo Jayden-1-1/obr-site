@@ -1,7 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { db } = require('../db');
-const { isConfigured } = require('../mailer');
 const turnstile = require('../turnstile');
 const discord = require('../discord');
 const {
@@ -14,7 +13,6 @@ const {
   dropTrackedSession,
 } = require('../middleware/auth');
 const {
-  EMAIL_RE,
   normalizeAnswer,
   sendEmailCode,
   consumeCode,
@@ -25,7 +23,7 @@ const router = express.Router();
 const _loginAttempts = new Map();
 
 router.get('/mail-status', (req, res) => {
-  res.json({ configured: isConfigured() });
+  res.json({ configured: false });
 });
 
 router.get('/captcha-config', (req, res) => {
@@ -36,34 +34,16 @@ router.get('/captcha-config', (req, res) => {
 router.get('/register-config', (req, res) => {
   const discordConfigured = discord.isOAuthConfigured();
   res.json({
-    discordRequired: discordConfigured,
+    discordRequired: true,
     discordEnabled: discordConfigured,
+    emailEnabled: false,
   });
 });
 
 router.post(
   '/send-code',
-  api(async (req, res) => {
-    const email = String(req.body.email || '').trim().toLowerCase().slice(0, 190);
-    const username = String(req.body.username || '').trim();
-
-    if (!EMAIL_RE.test(email)) return fail(res, 400, 'Введите корректный email');
-    if (!/^[a-zA-Z0-9_.]{3,20}$/.test(username)) {
-      return fail(res, 400, 'Логин: 3-20 символов (буквы, цифры, точка, подчёркивание)');
-    }
-    if (db.prepare('SELECT id FROM users WHERE LOWER(username) = LOWER(?)').get(username)) {
-      return fail(res, 409, 'Такой логин уже занят');
-    }
-    if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) {
-      return fail(res, 409, 'На эту почту уже зарегистрирован аккаунт');
-    }
-
-    const result = await sendEmailCode(email, 'register');
-    if (result.error) return fail(res, result.status || 429, result.error);
-    if (result.dev) {
-      return res.json({ ok: true, dev: true, code: result.code, channel: (result.channels || []).join(',') });
-    }
-    res.json({ ok: true, channel: (result.channels || []).join(',') });
+  api((req, res) => {
+    fail(res, 400, 'Регистрация и подтверждение производятся исключительно через Discord');
   })
 );
 
@@ -81,78 +61,10 @@ router.get(
   })
 );
 
-if (process.env.ALLOW_TEST_HOOKS === '1') {
-  router.post(
-    '/__test-pending',
-    api((req, res) => {
-      req.session.pendingDiscord = {
-        id: String(req.body.id || ''),
-        username: String(req.body.username || ''),
-      };
-      res.json({ ok: true });
-    })
-  );
-}
-
 router.post(
   '/register',
   api((req, res) => {
-    const username = String(req.body.username || '').trim();
-    const password = String(req.body.password || '');
-    const pending = req.session.pendingDiscord;
-    const discordConfigured = discord.isOAuthConfigured();
-
-    if (!/^[a-zA-Z0-9_.]{3,20}$/.test(username)) {
-      return fail(res, 400, 'Логин: 3-20 символов (буквы, цифры, точка, подчёркивание)');
-    }
-    if (password.length < 6) {
-      return fail(res, 400, 'Пароль должен быть не короче 6 символов');
-    }
-
-    // Only enforce discord linking if Discord OAuth is actually configured on server
-    if (discordConfigured && (!pending || !pending.id)) {
-      return fail(res, 400, 'Сначала привяжите Discord аккаунт');
-    }
-
-    const discordId = pending && pending.id ? String(pending.id) : '';
-    const discordName = pending && pending.username ? String(pending.username).slice(0, 60) : '';
-
-    if (db.prepare('SELECT id FROM users WHERE LOWER(username) = LOWER(?)').get(username)) {
-      return fail(res, 409, 'Такой логин уже занят');
-    }
-    if (discordId && db.prepare('SELECT id FROM users WHERE discord_id = ?').get(discordId)) {
-      return fail(res, 409, 'Этот Discord уже привязан к другому аккаунту');
-    }
-
-    const hash = bcrypt.hashSync(password, 10);
-    const first = db.prepare('SELECT COUNT(*) AS c FROM users').get().c === 0;
-    let info;
-    try {
-      info = db
-        .prepare(
-          'INSERT INTO users (username, password_hash, email, role, discord_id, discord_username) VALUES (?, ?, ?, ?, ?, ?)'
-        )
-        .run(username, hash, '', first ? 'commander' : 'user', discordId, discordName);
-    } catch (e) {
-      if (String(e && e.message).includes('UNIQUE')) return fail(res, 409, 'Такой логин уже занят');
-      throw e;
-    }
-
-    req.session.pendingDiscord = null;
-    const oldSid = req.sessionID;
-    req.session.regenerate((err) => {
-      try {
-        if (err) return fail(res, 500, 'Ошибка регистрации, попробуйте ещё раз');
-        deleteSessionRow(oldSid);
-        req.session.userId = info.lastInsertRowid;
-        trackSession(req);
-        const newUser = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
-        res.json({ user: publicUser(newUser) });
-      } catch (e) {
-        console.error(e);
-        if (!res.headersSent) fail(res, 500, 'Внутренняя ошибка сервера');
-      }
-    });
+    fail(res, 400, 'Регистрация на сайте осуществляется исключительно через Discord');
   })
 );
 
@@ -215,23 +127,18 @@ router.get(
   })
 );
 
-// ---------- Password Recovery ----------
+// ---------- Password Recovery (Discord DM / Security Question) ----------
 router.post(
   '/forgot/send',
   api(async (req, res) => {
-    const email = String(req.body.email || '').trim().toLowerCase().slice(0, 190);
-    const username = String(req.body.username || '').trim();
-    let user = null;
-    if (email && EMAIL_RE.test(email)) {
-      user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    } else if (username) {
-      user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username);
-    } else {
-      return fail(res, 400, 'Введите email или логин');
+    const username = String(req.body.username || req.body.email || '').trim();
+    if (!username) {
+      return fail(res, 400, 'Введите логин');
     }
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username);
     if (!user) return res.json({ ok: true, hasQuestion: false });
-    const codeKey = user.email || `u:${user.id}`;
 
+    const codeKey = `u:${user.id}`;
     const result = await sendEmailCode(codeKey, 'reset', { discordId: user.discord_id });
     if (result.error) return fail(res, result.status || 429, result.error);
     const payload = {
@@ -249,25 +156,23 @@ router.post(
 router.post(
   '/forgot/reset',
   api((req, res) => {
-    const email = String(req.body.email || '').trim().toLowerCase().slice(0, 190);
-    const username = String(req.body.username || '').trim();
+    const username = String(req.body.username || req.body.email || '').trim();
     const code = String(req.body.code || '').trim();
     const password = String(req.body.password || '');
     const answer = String(req.body.answer || '').trim();
 
-    if (!email && !username) return fail(res, 400, 'Введите email или логин');
-    if (!/^\d{6}$/.test(code)) return fail(res, 400, 'Введите 6-значный код из письма');
+    if (!username) return fail(res, 400, 'Введите логин');
+    if (!/^\d{6}$/.test(code)) return fail(res, 400, 'Введите 6-значный код подтверждения');
     if (password.length < 6) return fail(res, 400, 'Пароль должен содержать не менее 6 символов');
 
-    let user = email ? db.prepare('SELECT * FROM users WHERE email = ?').get(email) : null;
-    if (!user && username) user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username);
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username);
     if (!user) return fail(res, 404, 'Пользователь не найден');
-    const codeKey = user.email || `u:${user.id}`;
+    const codeKey = `u:${user.id}`;
 
     const codeRow = db
       .prepare("SELECT * FROM verify_codes WHERE email = ? AND used = 0 ORDER BY id DESC LIMIT 1")
       .get(codeKey);
-    if (!codeRow) return fail(res, 400, 'Сначала получите код на почту');
+    if (!codeRow) return fail(res, 400, 'Сначала запросите код в Discord');
     if (codeRow.code !== code) {
       const attempts = (codeRow.attempts || 0) + 1;
       db.prepare('UPDATE verify_codes SET attempts = ? WHERE id = ?').run(attempts, codeRow.id);

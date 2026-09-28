@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   roleEl.textContent = SITE.roleLabels[user.role] || user.role;
   roleEl.classList.add(roleClass(user.role));
   document.getElementById('p-created').textContent = formatDate(user.created_at);
-  document.getElementById('p-email').textContent = user.email || 'не указана';
+  const discordTagEl = document.getElementById('p-discord-tag');
+  if (discordTagEl) {
+    discordTagEl.textContent = user.discord_username ? `@${user.discord_username}` : 'не привязан';
+  }
   document.getElementById('p-about').value = user.about || '';
 
   function renderAvatar() {
@@ -61,27 +64,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       SITE.me = data.user;
       user.about = data.user.about;
       showAlert(alertEl, 'ok', 'О себе сохранено');
-    } catch (e) {
-      showAlert(alertEl, 'err', e.message);
-    }
-  });
-
-  // ---------- Смена почты ----------
-  document.getElementById('p-email-save').addEventListener('click', async () => {
-    try {
-      const data = await apiFetch('/api/users/me/email', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: document.getElementById('p-email-new').value,
-          password: document.getElementById('p-email-pass').value,
-        }),
-      });
-      SITE.me = data.user;
-      document.getElementById('p-email').textContent = data.user.email;
-      document.getElementById('p-email-new').value = '';
-      document.getElementById('p-email-pass').value = '';
-      refreshHeaderUser();
-      showAlert(alertEl, 'ok', 'Почта обновлена');
     } catch (e) {
       showAlert(alertEl, 'err', e.message);
     }
@@ -259,8 +241,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const params = new URLSearchParams(location.search);
-  if (params.get('discord') === 'ok') {
-    showAlert(alertEl, 'ok', 'Discord привязан');
+  if (params.get('welcome') === '1') {
+    showAlert(alertEl, 'ok', 'Добро пожаловать в О.Б.Р! Профиль успешно зарегистрирован через Discord.');
+  } else if (params.get('discord') === 'ok') {
+    showAlert(alertEl, 'ok', 'Discord успешно привязан');
+  } else if (params.get('discord') === 'taken') {
+    showAlert(alertEl, 'err', 'Этот Discord аккаунт уже привязан к другому бойцу.');
   } else if (params.get('discord') === 'error') {
     showAlert(alertEl, 'err', 'Не удалось привязать Discord. Проверьте настройки в Discord Developer Portal.');
   }
@@ -353,6 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       f('dc-role-builder').value = cfg.role_builder;
       f('dc-webhook').value = cfg.webhook_url;
       f('dc-webhook-warnings').value = cfg.warnings_webhook_url;
+      if (f('dc-redirect-uri')) f('dc-redirect-uri').value = cfg.redirect_uri || '';
       const secrets = [];
       if (cfg.has_bot_token) secrets.push('токен бота задан');
       if (cfg.has_client_secret) secrets.push('client secret задан');
@@ -379,6 +366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             role_builder: f('dc-role-builder').value,
             webhook_url: f('dc-webhook').value,
             warnings_webhook_url: f('dc-webhook-warnings').value,
+            redirect_uri: f('dc-redirect-uri') ? f('dc-redirect-uri').value : '',
           }),
         });
         f('dc-bot-token').value = '';
@@ -413,8 +401,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           alertEl,
           'ok',
           data.dev && data.code
-            ? `Код отправлен (режим разработки): ${data.code}`
-            : 'Код отправлен на вашу почту'
+            ? `Код подтверждения (режим разработки): ${data.code}`
+            : (data.channels && data.channels.includes('discord')
+                ? 'Код подтверждения отправлен в личные сообщения Discord бота'
+                : 'Код подтверждения отправлен')
         );
       } catch (e) {
         showAlert(alertEl, 'err', e.message);

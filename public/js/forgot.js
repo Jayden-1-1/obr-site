@@ -30,27 +30,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  const emailInput = document.getElementById('a-email');
+  const usernameInput = document.getElementById('a-username');
   const sendBtn = document.getElementById('send-code-btn');
-  emailInput.addEventListener('input', () => {
-    sendBtn.disabled = !emailInput.value.trim();
+  usernameInput.addEventListener('input', () => {
+    sendBtn.disabled = !usernameInput.value.trim();
   });
 
   const sendCode = async () => {
     clearAlert(alertEl);
-    const email = emailInput.value.trim();
-    if (!email) {
-      showAlert(alertEl, 'err', 'Введите email или логин');
+    const username = usernameInput.value.trim();
+    if (!username) {
+      showAlert(alertEl, 'err', 'Введите логин');
       return;
     }
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     sendBtn.disabled = true;
     const original = sendBtn.textContent;
     sendBtn.textContent = 'Отправляем…';
     try {
       const res = await apiFetch('/api/auth/forgot/send', {
         method: 'POST',
-        body: JSON.stringify(isEmail ? { email } : { username: email }),
+        body: JSON.stringify({ username }),
       });
       document.getElementById('code-row').style.display = '';
       sendBtn.style.display = 'none';
@@ -61,11 +60,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('q-label').textContent = 'Контрольный вопрос: ' + res.question;
       }
       if (res.dev && res.code) {
-        showAlert(alertEl, 'info', `Код: ${res.code} (письмо не ушло — сервер пока не может отправлять почту, введи этот код)`);
-      } else if (res.channel && res.channel.includes('discord')) {
-        showAlert(alertEl, 'ok', 'Код отправлен в личные сообщения Discord (бот «О.Б.Р — сайт»). Проверьте ЛС.');
+        showAlert(alertEl, 'info', `Код (режим разработки): ${res.code}`);
       } else {
-        showAlert(alertEl, 'ok', 'Код отправлен на почту. Проверьте входящие и папку «Спам».');
+        showAlert(alertEl, 'ok', 'Код отправлен в личные сообщения Discord бота «О.Б.Р — сайт». Проверьте ЛС.');
       }
       document.getElementById('a-code').focus();
     } catch (err) {
@@ -91,20 +88,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const btn = document.getElementById('reset-btn');
     btn.disabled = true;
-    const email = emailInput.value.trim();
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const username = usernameInput.value.trim();
     try {
       await apiFetch('/api/auth/forgot/reset', {
         method: 'POST',
         body: JSON.stringify({
-          email: isEmail ? email : '',
-          username: isEmail ? '' : email,
+          username,
           code: document.getElementById('a-code').value.trim(),
           answer: document.getElementById('a-answer').value.trim(),
           password,
         }),
       });
-      showAlert(alertEl, 'ok', 'Пароль изменён. Войдите с новым паролем.');
+      showAlert(alertEl, 'ok', 'Пароль успешно изменён! Войдите в систему.');
       setTimeout(() => (window.location.href = '/login.html'), 1200);
     } catch (err) {
       showAlert(alertEl, 'err', err.message);

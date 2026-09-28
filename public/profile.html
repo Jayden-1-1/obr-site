@@ -29,7 +29,7 @@
           <div class="profile-name" id="p-username">—</div>
           <div class="profile-role"><span class="role-badge" id="p-role">—</span></div>
           <div class="profile-meta">
-            <span class="profile-meta-item">📧 <span id="p-email">—</span></span>
+            <span class="profile-meta-item">🎮 Discord: <span id="p-discord-tag">—</span></span>
             <span class="profile-meta-item">🗓 В отряде с <span id="p-created">—</span></span>
           </div>
           <div class="hint" style="margin-top:8px">Аватар виден в штатке, рапортах и заявках. Форматы PNG, JPG, GIF, WEBP, BMP, AVIF · до 5 МБ</div>
@@ -46,25 +46,6 @@
           <textarea id="p-about" rows="4" maxlength="500" placeholder="Например: позывной, звание, чем занимаюсь…"></textarea>
           <div class="form-actions">
             <button id="p-about-save" class="btn primary">Сохранить</button>
-          </div>
-        </div>
-
-        <div class="panel settings-card reveal" style="--rd:180ms">
-          <div class="settings-card-head">
-            <span class="settings-icon">@</span>
-            <h3>Сменить почту</h3>
-          </div>
-          <p class="muted">Почта используется для восстановления доступа.</p>
-          <div class="form-row">
-            <label>Новый email</label>
-            <input type="email" id="p-email-new" placeholder="you@example.com">
-          </div>
-          <div class="form-row">
-            <label>Пароль (для подтверждения)</label>
-            <input type="password" id="p-email-pass" placeholder="Введите пароль">
-          </div>
-          <div class="form-actions">
-            <button id="p-email-save" class="btn primary">Сменить почту</button>
           </div>
         </div>
 
@@ -121,7 +102,7 @@
           <p class="muted">Привяжите свой Discord — при принятии в отряд вы автоматически получите роль на сервере.</p>
           <div id="discord-status" class="hint" style="margin-bottom:10px"></div>
           <div class="form-actions">
-            <button id="discord-link" class="btn primary">Привязать Discord</button>
+            <button id="discord-link" class="btn discord">Привязать Discord</button>
             <button id="discord-unlink" class="btn" style="display:none">Отвязать</button>
           </div>
         </div>
@@ -184,6 +165,11 @@
             <label>Webhook канала выговоров</label>
             <input type="text" id="dc-webhook-warnings" placeholder="https://discord.com/api/webhooks/...">
           </div>
+          <div class="form-row">
+            <label>Кастомный Redirect URI (необязательно)</label>
+            <input type="text" id="dc-redirect-uri" placeholder="например: http://localhost:3001/api/discord/oauth/callback">
+            <div class="hint">По умолчанию определяется автоматически как <code>{домен}/api/discord/oauth/callback</code>. Убедитесь, что этот адрес добавлен в Discord Developer Portal в разделе OAuth2 -> Redirects!</div>
+          </div>
           <div class="hint" id="dc-config-status"></div>
           <div class="form-actions">
             <button id="dc-save" class="btn primary">Сохранить</button>
@@ -207,13 +193,13 @@
             <span class="settings-icon">⇄</span>
             <h3>Передать права</h3>
           </div>
-          <p class="muted">Передайте роль командира другому пользователю. Код подтверждения придёт на вашу почту.</p>
+          <p class="muted">Передайте роль командира другому пользователю. Код подтверждения придёт в личные сообщения Discord бота.</p>
           <div class="form-row">
             <label>Логин пользователя</label>
             <input type="text" id="t-username" maxlength="40" placeholder="Логин">
           </div>
           <div class="form-row" id="t-code-row" style="display:none">
-            <label>Код из письма</label>
+            <label>Код подтверждения (из Discord)</label>
             <input type="text" id="t-code" maxlength="6" inputmode="numeric" placeholder="000000">
           </div>
           <div class="form-actions">

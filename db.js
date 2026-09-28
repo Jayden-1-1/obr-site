@@ -177,8 +177,9 @@ ensureColumn('users', 'discord_username', 'TEXT', '');
 
 try {
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower ON users(LOWER(username))');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_users_discord_id ON users(discord_id)');
 } catch (e) {
-  console.error('[DB] Не удалось создать индекс уникальности логинов (есть дубликаты?):', e.message);
+  console.error('[DB] Не удалось создать индексы пользователей:', e.message);
 }
 
 const RANKS = [

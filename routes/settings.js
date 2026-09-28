@@ -152,14 +152,13 @@ router.post(
     if (!target) return fail(res, 404, 'Пользователь с таким логином не найден');
     if (target.id === req.user.id) return fail(res, 400, 'Вы не можете передать права самому себе');
     if (target.role === 'commander') return fail(res, 400, 'Этот пользователь уже командир');
-    if (!req.user.email) {
-      return fail(res, 400, 'У вас не указана почта — сначала добавьте её в настройках');
-    }
 
-    const result = await sendEmailCode(req.user.email, 'transfer');
+    const codeKey = `u:${req.user.id}`;
+    const result = await sendEmailCode(codeKey, 'transfer', { discordId: req.user.discord_id });
     if (result.error) return fail(res, 429, result.error);
-    if (result.dev) return res.json({ ok: true, dev: true, code: result.code, username });
-    res.json({ ok: true, username });
+    const channels = (result.channels || []).join(',');
+    if (result.dev) return res.json({ ok: true, dev: true, code: result.code, username, channels });
+    res.json({ ok: true, username, channels });
   })
 );
 
@@ -175,9 +174,10 @@ router.post(
     if (!target) return fail(res, 404, 'Пользователь с таким логином не найден');
     if (target.id === req.user.id) return fail(res, 400, 'Вы не можете передать права самому себе');
     if (target.role === 'commander') return fail(res, 400, 'Этот пользователь уже командир');
-    if (!/^\d{6}$/.test(code)) return fail(res, 400, 'Введите 6-значный код из письма');
+    if (!/^\d{6}$/.test(code)) return fail(res, 400, 'Введите 6-значный код подтверждения');
 
-    const check = consumeCode(req.user.email, code);
+    const codeKey = `u:${req.user.id}`;
+    const check = consumeCode(codeKey, code);
     if (check.error) return fail(res, 400, check.error);
 
     const oldCmdr = req.user;

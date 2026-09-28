@@ -269,7 +269,39 @@ a:hover { color: var(--accent); }
   overflow: hidden;
   border: 1px solid var(--border);
   background: #000;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+              box-shadow 0.4s ease,
+              border-color 0.4s ease;
+}
+
+.banner-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.75), 0 0 25px rgba(255, 255, 255, 0.04);
+}
+
+.banner-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent
+  );
+  transform: skewX(-20deg);
+  pointer-events: none;
+  animation: bannerSheen 10s ease-in-out infinite;
+}
+
+@keyframes bannerSheen {
+  0%, 80% { left: -100%; }
+  100% { left: 200%; }
 }
 
 .banner-img {
@@ -277,6 +309,11 @@ a:hover { color: var(--accent); }
   height: auto;
   display: block;
   object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.banner-card:hover .banner-img {
+  transform: scale(1.012);
 }
 
 @media (max-width: 720px) {
@@ -485,12 +522,15 @@ textarea, input[type="text"], input[type="password"], input[type="file"], select
   font-size: 14px;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 textarea { resize: vertical; min-height: 110px; }
 
-input:focus, textarea:focus, select:focus { border-color: var(--text-faint); }
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
 
 label {
   display: block;
@@ -1716,24 +1756,36 @@ main.container {
 /* ---------- Окно подтверждения (Confirm Modal) ---------- */
 .confirm-backdrop {
   z-index: 250;
-  display: none;
-  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   position: fixed;
   inset: 0;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
 }
 .confirm-backdrop.in {
-  display: flex;
+  opacity: 1;
+  pointer-events: auto;
 }
 .confirm-modal {
   max-width: 440px;
+  width: 100%;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transform: scale(0.94) translateY(6px);
+  transition: transform 0.24s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.confirm-backdrop.in .confirm-modal {
+  transform: scale(1) translateY(0);
 }
 .confirm-head {
   display: flex;
@@ -1899,4 +1951,228 @@ main.container {
     bottom: 16px;
     max-width: none;
   }
+}
+
+/* ---------- Discord Кнопки и Авторизация ---------- */
+.btn.discord,
+.btn.discord-hero-btn,
+.btn.discord-nav-btn,
+.discord-hero-btn,
+.discord-nav-btn,
+.btn.primary.discord,
+.btn.primary.discord-hero-btn,
+.btn.primary.discord-nav-btn,
+a.btn.discord,
+a.btn.discord-hero-btn,
+a.btn.discord-nav-btn {
+  background: #5865f2 !important;
+  background-image: linear-gradient(135deg, #5865f2 0%, #4752c4 100%) !important;
+  color: #ffffff !important;
+  border-color: #5865f2 !important;
+  position: relative;
+  overflow: hidden;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.35) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: transform 0.22s cubic-bezier(0.22, 0.61, 0.36, 1),
+              box-shadow 0.25s ease,
+              background 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.btn.discord:hover,
+.btn.discord-hero-btn:hover,
+.btn.discord-nav-btn:hover,
+.discord-hero-btn:hover,
+.discord-nav-btn:hover,
+.btn.primary.discord:hover,
+.btn.primary.discord-hero-btn:hover,
+.btn.primary.discord-nav-btn:hover,
+a.btn.discord:hover,
+a.btn.discord-hero-btn:hover,
+a.btn.discord-nav-btn:hover {
+  background: #4752c4 !important;
+  background-image: linear-gradient(135deg, #6975f5 0%, #4752c4 100%) !important;
+  border-color: #6975f5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 24px rgba(88, 101, 242, 0.55) !important;
+  transform: translateY(-2px);
+}
+
+.btn.discord:active,
+.btn.discord-hero-btn:active,
+.btn.discord-nav-btn:active,
+.discord-hero-btn:active,
+.discord-nav-btn:active {
+  transform: scale(0.97) translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(88, 101, 242, 0.3) !important;
+}
+
+.btn.discord svg,
+.btn.discord-hero-btn svg,
+.btn.discord-nav-btn svg,
+.discord-hero-btn svg,
+.discord-nav-btn svg {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.btn.discord::before,
+.discord-hero-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+}
+
+.btn.discord:hover::before,
+.discord-hero-btn:hover::before {
+  left: 125%;
+}
+
+.discord-hero-btn {
+  padding: 12px 22px;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.discord-nav-btn {
+  padding: 6px 14px;
+}
+
+.btn-icon {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.discord-hero-btn:hover .btn-icon,
+.btn.discord:hover .btn-icon,
+.discord-nav-btn:hover .btn-icon {
+  transform: rotate(-8deg) scale(1.1);
+}
+
+/* ---------- Тактические элементы и индикаторы ---------- */
+.status-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #57f287;
+  position: relative;
+  margin-right: 7px;
+  box-shadow: 0 0 8px #57f287;
+  vertical-align: middle;
+}
+
+.status-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid #57f287;
+  animation: radarWave 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+@keyframes radarWave {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.tactical-badge-status {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(88, 101, 242, 0.12);
+  border: 1px solid rgba(88, 101, 242, 0.32);
+  color: #a4b0ff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin: 0 auto 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  animation: fadeInDown 0.5s ease both;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.auth-desc {
+  color: var(--text-dim);
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.auth-perks {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 14px 0 18px;
+  font-size: 13px;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  text-align: left;
+}
+
+.auth-perk {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.perk-check {
+  color: #57f287;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 18px 0;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.auth-divider span {
+  padding: 0 12px;
 }

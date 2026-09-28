@@ -58,6 +58,7 @@ function publicConfig() {
     role_on_accept: c.role_on_accept || '',
     role_civilian: c.role_civilian || '',
     role_builder: c.role_builder || '',
+    redirect_uri: c.redirect_uri || '',
     webhook_url: c.webhook_url || '',
     warnings_webhook_url: c.warnings_webhook_url || '',
     has_bot_token: !!c.bot_token,
@@ -71,7 +72,7 @@ async function saveFromRequest(body) {
   const cur = loadConfig();
   const s = (v) => String(v || '').trim();
   const next = { ...cur };
-  for (const k of ['client_id', 'guild_id', 'role_on_accept', 'role_civilian', 'role_builder', 'webhook_url', 'warnings_webhook_url']) {
+  for (const k of ['client_id', 'guild_id', 'role_on_accept', 'role_civilian', 'role_builder', 'webhook_url', 'warnings_webhook_url', 'redirect_uri']) {
     if (body[k] !== undefined) next[k] = s(body[k]);
   }
   for (const k of ['bot_token', 'client_secret']) {
@@ -292,7 +293,8 @@ async function exchangeCode(code, redirectUri) {
     body: body.toString(),
   });
   if (!res.ok) {
-    console.error('[discord] обмен кода OAuth не удался', res.status);
+    const errText = await res.text().catch(() => '');
+    console.error('[discord] обмен кода OAuth не удался:', res.status, errText);
     return null;
   }
   return res.json();
