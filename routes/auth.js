@@ -106,13 +106,19 @@ router.post(
 
 router.post('/logout', (req, res) => {
   const sid = req.sessionID;
-  if (req.session) {
+  if (req.session && typeof req.session.destroy === 'function') {
     req.session.destroy(() => {
-      db.prepare('DELETE FROM sessions WHERE sid = ?').run(sid);
-      dropTrackedSession(sid);
+      if (sid) {
+        db.prepare('DELETE FROM sessions WHERE sid = ?').run(sid);
+        dropTrackedSession(sid);
+      }
       res.json({ ok: true });
     });
   } else {
+    if (sid) {
+      db.prepare('DELETE FROM sessions WHERE sid = ?').run(sid);
+      dropTrackedSession(sid);
+    }
     res.json({ ok: true });
   }
 });

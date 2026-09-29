@@ -270,7 +270,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }),
         });
         showAlert(alertEl, 'ok', 'Заявка на билдера отправлена! Ожидайте решения руководства.');
-        showToast('ok', 'Заявка на билдера успешно отправлена!');
         builderBox.style.display = 'none';
         const note = document.createElement('div');
         note.className = 'empty';
@@ -278,7 +277,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         builderBox.parentElement.insertBefore(note, builderBox);
       } catch (err) {
         showAlert(alertEl, 'err', err.message);
-        showToast('err', err.message);
       } finally {
         submitBtn.disabled = false;
       }
@@ -314,7 +312,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }),
       });
       showAlert(alertEl, 'ok', 'Заявка отправлена! Ожидайте решения руководства.');
-      showToast('ok', 'Заявка на вступление успешно отправлена!');
       joinBox.style.display = 'none';
       const note = document.createElement('div');
       note.className = 'empty';
@@ -322,7 +319,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       joinBox.parentElement.insertBefore(note, joinBox);
     } catch (err) {
       showAlert(alertEl, 'err', err.message);
-      showToast('err', err.message);
     } finally {
       submitBtn.disabled = false;
     }

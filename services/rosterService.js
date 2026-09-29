@@ -87,10 +87,25 @@ function vacationActive(entry) {
 }
 
 function validUntilDate(s) {
-  const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s);
-  if (!m) return false;
-  const d = new Date(+m[3], +m[2] - 1, +m[1]);
-  if (d.getDate() !== +m[1] || d.getMonth() !== +m[2] - 1 || d.getFullYear() !== +m[3]) return false;
+  if (!s) return false;
+  let day, month, year;
+  let m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s);
+  if (m) {
+    day = +m[1];
+    month = +m[2] - 1;
+    year = +m[3];
+  } else {
+    m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (m) {
+      year = +m[1];
+      month = +m[2] - 1;
+      day = +m[3];
+    } else {
+      return false;
+    }
+  }
+  const d = new Date(year, month, day);
+  if (d.getDate() !== day || d.getMonth() !== month || d.getFullYear() !== year) return false;
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   return d >= now;

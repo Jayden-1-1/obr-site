@@ -296,35 +296,21 @@ function formatDate(dt) {
   return `${m[3]}.${m[2]}.${m[1]}`;
 }
 
-let statusFilter = 'all';
-
 function render() {
   const body = document.getElementById('roster-body');
   const manager = isManager(SITE.me);
-
-  let list = rosterData;
-  if (statusFilter === 'active') {
-    list = list.filter((r) => r.status === 'active' && !r.vacation_until);
-  } else if (statusFilter === 'vacation') {
-    list = list.filter((r) => r.status === 'active' && !!r.vacation_until);
-  } else if (statusFilter === 'warned') {
-    list = list.filter((r) => r.warnings > 0 || r.recert);
-  } else if (statusFilter === 'fired') {
-    list = list.filter((r) => r.status !== 'active');
-  }
-
   const q = rosterFilter.trim().toLowerCase();
-  if (q) {
-    list = list.filter((r) =>
-      [r.callsign, r.employee_number, r.position, r.rank, r.discord, r.age]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    );
-  }
+  const list = q
+    ? rosterData.filter((r) =>
+        [r.callsign, r.employee_number, r.position, r.rank, r.discord, r.age]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q))
+      )
+    : rosterData;
 
   if (!list.length) {
-    body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-faint);padding:30px">${
-      rosterData.length ? 'Ничего не найдено по выбранным параметрам' : 'Штатное расписание пусто'
+    body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--faint)">${
+      rosterData.length ? 'Ничего не найдено' : 'Штат пуст'
     }</td></tr>`;
     return;
   }
@@ -404,34 +390,20 @@ function render() {
 
 function renderStats() {
   const el = document.getElementById('roster-stats');
-  const active = rosterData.filter((r) => r.status === 'active' && !r.vacation_until).length;
-  const vacation = rosterData.filter((r) => r.status === 'active' && !!r.vacation_until).length;
-  const warned = rosterData.filter((r) => r.warnings > 0 || r.recert).length;
-  const fired = rosterData.filter((r) => r.status !== 'active').length;
-
-  const countAll = document.getElementById('rcount-all');
-  if (countAll) countAll.textContent = rosterData.length;
-  const countActive = document.getElementById('rcount-active');
-  if (countActive) countActive.textContent = active;
-  const countVacation = document.getElementById('rcount-vacation');
-  if (countVacation) countVacation.textContent = vacation;
-  const countWarned = document.getElementById('rcount-warned');
-  if (countWarned) countWarned.textContent = warned;
-  const countFired = document.getElementById('rcount-fired');
-  if (countFired) countFired.textContent = fired;
-
-  if (el) {
-    el.innerHTML = `
-      <span class="rstat"><b>${rosterData.length}</b> в списке</span>
-      <span class="rstat ok"><b>${active}</b> в строю</span>
-      <span class="rstat vacation"><b>${vacation}</b> в отпуске</span>
-      <span class="rstat ${warned ? 'warn' : ''}"><b>${warned}</b> с взысканиями</span>
-      <span class="rstat ${fired ? 'danger' : ''}"><b>${fired}</b> уволено</span>`;
-  }
+  if (!el) return;
+  const active = rosterData.filter((r) => r.status === 'active').length;
+  const fired = rosterData.length - active;
+  const warned = rosterData.filter((r) => r.warnings >= 3).length;
+  el.innerHTML = `
+    <span class="rstat"><b>${rosterData.length}</b> в списке</span>
+    <span class="rstat ok"><b>${active}</b> в строю</span>
+    <span class="rstat ${fired ? 'off' : ''}"><b>${fired}</b> уволено</span>
+    <span class="rstat ${warned ? 'danger' : ''}"><b>${warned}</b> на грани выговора</span>`;
 }
 
 async function load() {
   const alertEl = document.getElementById('alert');
+  const body = document.getElementById('roster-body');
   try {
     const data = await apiFetch('/api/roster');
     rosterData = (data && data.roster) || [];
@@ -442,6 +414,9 @@ async function load() {
     render();
   } catch (e) {
     showAlert(alertEl, 'err', e.message);
+    if (body) {
+      body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--danger,#e5484d);padding:24px 0">Не удалось загрузить данные таблицы: ${esc(e.message)}<br><button class="btn small" style="margin-top:10px" onclick="load()">Повторить попытку</button></td></tr>`;
+    }
   }
 }
 
@@ -461,15 +436,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('roster-search').addEventListener('input', (e) => {
     rosterFilter = e.target.value;
     render();
-  });
-
-  document.querySelectorAll('#roster-filter-bar .filter-pill').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#roster-filter-bar .filter-pill').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      statusFilter = btn.dataset.status;
-      render();
-    });
   });
 
   const untilInput = document.getElementById('w-until');
@@ -495,20 +461,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       openRosterModal();
     });
 
-    try {
-      const data = await apiFetch('/api/users');
-      const users = (data && data.users) || [];
-      document.getElementById('r-user').innerHTML =
-        '<option value="">— не привязывать —</option>' +
-        users
-          .map(
-            (u) =>
-              `<option value="${u.id}">${esc(u.username)} (${esc(SITE.roleLabels[u.role] || u.role)})</option>`
-          )
-          .join('');
-    } catch (e) {
-      console.warn('Failed to load users for roster binding:', e);
-    }
+    apiFetch('/api/users')
+      .then((data) => {
+        const users = (data && data.users) || [];
+        const rUser = document.getElementById('r-user');
+        if (rUser) {
+          rUser.innerHTML =
+            '<option value="">— не привязывать —</option>' +
+            users
+              .map(
+                (u) =>
+                  `<option value="${u.id}">${esc(u.username)} (${esc(SITE.roleLabels[u.role] || u.role)})</option>`
+              )
+              .join('');
+        }
+      })
+      .catch((e) => console.warn('Failed to load users for roster binding:', e));
   }
 
   await load();

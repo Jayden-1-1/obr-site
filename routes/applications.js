@@ -84,9 +84,17 @@ router.post(
     const discordHandle = String(req.body.discord || '').trim().slice(0, 60);
 
     if (type === 'builder') {
-      const rosterRow = db
+      let rosterRow = db
         .prepare('SELECT id FROM roster WHERE user_id = ? AND status = ?')
         .get(req.user.id, 'active');
+      if (!rosterRow && isStaff(req.user)) {
+        rosterRow = db
+          .prepare('SELECT id FROM roster WHERE (LOWER(callsign) = LOWER(?) OR LOWER(callsign) = LOWER(?)) AND status = ?')
+          .get(req.user.username, callsign, 'active');
+        if (rosterRow) {
+          db.prepare('UPDATE roster SET user_id = ? WHERE id = ?').run(req.user.id, rosterRow.id);
+        }
+      }
       if (!rosterRow && !isStaff(req.user)) {
         return fail(res, 403, 'Заявка на билдера доступна персоналу фракции');
       }
@@ -272,9 +280,17 @@ router.post(
     if (application.status !== 'pending') return fail(res, 400, 'Заявка уже рассмотрена');
 
     if (application.type === 'builder') {
-      const rosterEntry = db
+      let rosterEntry = db
         .prepare('SELECT * FROM roster WHERE user_id = ? AND status = ?')
         .get(application.user_id, 'active');
+      if (!rosterEntry) {
+        rosterEntry = db
+          .prepare('SELECT * FROM roster WHERE (LOWER(callsign) = LOWER(?) OR LOWER(callsign) = LOWER(?)) AND status = ?')
+          .get(application.callsign, application.callsign, 'active');
+        if (rosterEntry) {
+          db.prepare('UPDATE roster SET user_id = ? WHERE id = ?').run(application.user_id, rosterEntry.id);
+        }
+      }
       if (!rosterEntry) return fail(res, 400, 'Сотрудник не состоит в штате фракции');
       db.prepare('UPDATE roster SET builder = 1 WHERE id = ?').run(rosterEntry.id);
       const withBuilder = db.prepare('SELECT * FROM roster WHERE id = ?').get(rosterEntry.id);

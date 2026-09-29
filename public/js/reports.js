@@ -168,112 +168,61 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>`;
   }
 
-  let reportsData = [];
-  let currentReportFilter = 'all';
-
-  function updateReportStats(reports) {
-    const openCount = reports.filter((r) => r.status === 'open').length;
-    const repCount = reports.filter((r) => r.type === 'report').length;
-    const promoCount = reports.filter((r) => r.type === 'promotion').length;
-    const compCount = reports.filter((r) => r.type === 'complaint').length;
-    const vacCount = reports.filter((r) => r.type === 'vacation').length;
-    const doneCount = reports.filter((r) => r.status === 'done').length;
-
-    const elAll = document.getElementById('rep-count-all');
-    if (elAll) elAll.textContent = reports.length;
-    const elOpen = document.getElementById('rep-count-open');
-    if (elOpen) elOpen.textContent = openCount;
-    const elRep = document.getElementById('rep-count-report');
-    if (elRep) elRep.textContent = repCount;
-    const elPromo = document.getElementById('rep-count-promo');
-    if (elPromo) elPromo.textContent = promoCount;
-    const elComp = document.getElementById('rep-count-comp');
-    if (elComp) elComp.textContent = compCount;
-    const elVac = document.getElementById('rep-count-vac');
-    if (elVac) elVac.textContent = vacCount;
-
-    const statsEl = document.getElementById('reports-stats');
-    if (statsEl) {
-      statsEl.innerHTML = `
-        <span class="rstat"><b>${reports.length}</b> всего</span>
-        <span class="rstat warn"><b>${openCount}</b> на рассмотрении</span>
-        <span class="rstat ok"><b>${doneCount}</b> рассмотрено</span>`;
-    }
-  }
-
-  function renderReports() {
-    const list = document.getElementById('reports-list');
-    let filtered = reportsData;
-    if (currentReportFilter === 'open') {
-      filtered = reportsData.filter((r) => r.status === 'open');
-    } else if (currentReportFilter === 'report' || currentReportFilter === 'promotion' || currentReportFilter === 'complaint' || currentReportFilter === 'vacation') {
-      filtered = reportsData.filter((r) => r.type === currentReportFilter);
-    }
-
-    if (!filtered.length) {
-      list.innerHTML = `<div class="empty">${reportsData.length ? 'Нет рапортов по выбранному фильтру' : 'Рапортов пока нет'}</div>`;
-      return;
-    }
-
-    list.innerHTML = filtered
-      .map((r, i) => {
-        let actions = '';
-        if (manager) {
-          actions += `<button class="btn small ${r.status === 'open' ? 'ok' : ''}" onclick="toggleReportStatus(${r.id})">${r.status === 'open' ? 'Отметить рассмотренным' : 'Вернуть в работу'}</button>`;
-        }
-        if (manager || r.user_id === SITE.me.id) {
-          actions += `<button class="btn small danger" onclick="deleteReport(${r.id})">Удалить</button>`;
-        }
-        const photosCount = (r.photos || []).length;
-        return `
-        <div class="report-card reveal ${r.status}" style="--rd:${Math.min(i * 60, 240)}ms">
-          <div class="report-strip ${r.type}"></div>
-          <div class="report-head">
-            <div class="rep-stamp">${statusHtml(r.status)}</div>
-            <div class="rep-title">РАПОРТ</div>
-            <div class="rep-type">${typeLabel[r.type] || 'Рапорт'}</div>
-            <div class="rep-to">Командованию О.Б.Р.</div>
-            <div class="rep-from">${avatarInline(r)} От <b>${esc(r.signature || r.username || '—')}</b></div>
-          </div>
-          <div class="report-meta">
-            <span><b>Автор:</b> ${esc(r.username || '—')}</span>
-            <span><b>Дата:</b> ${esc(r.date)}</span>
-            <span><b>Отправлено:</b> ${formatDate(r.created_at)}</span>
-          </div>
-          <div class="report-body">
-            ${r.v_from && r.v_to ? `<div class="rep-vacation"><b>Отпуск:</b> с ${esc(r.v_from)} по ${esc(r.v_to)}</div>` : ''}
-            <div class="rep-theme"><b>Тема:</b> ${esc(r.theme)}</div>
-            <div class="rep-text">${esc(r.text)}</div>
-            ${r.attachments ? `<div class="rep-attachments"><b>Приложения:</b> ${esc(r.attachments)}</div>` : ''}
-          </div>
-          ${photosCount ? `<div class="report-photos-block"><div class="rep-photos-title">Приложенные фото и скриншоты (${photosCount})</div>${photosHtml(r)}</div>` : ''}
-          <div class="report-sign">
-            ${r.status === 'done' && r.reviewed_at ? `<div class="rep-review">Рассмотрено командованием: ${formatDate(r.reviewed_at)}</div>` : ''}
-            <div class="rep-sig-line">Подпись: <i>${esc(r.signature || '—')}</i></div>
-          </div>
-          ${actions ? `<div class="report-actions"><div class="row-actions">${actions}</div></div>` : ''}
-        </div>`;
-      })
-      .join('');
-  }
-
-  document.querySelectorAll('#reports-filter-bar .filter-pill').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#reports-filter-bar .filter-pill').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentReportFilter = btn.dataset.filter;
-      renderReports();
-    });
-  });
-
   async function load() {
     try {
       const data = await apiFetch('/api/reports');
-      reportsData = (data && data.reports) || [];
-      updateReportStats(reportsData);
-      renderReports();
+      const list = document.getElementById('reports-list');
+      const reports = (data && data.reports) || [];
+      if (!reports.length) {
+        list.innerHTML = '<div class="empty">Рапортов пока нет</div>';
+        return;
+      }
+      list.innerHTML = reports
+        .map((r, i) => {
+          let actions = '';
+          if (manager) {
+            actions += `<button class="btn small ${r.status === 'open' ? 'primary' : ''}" onclick="toggleReportStatus(${r.id})">${r.status === 'open' ? 'Отметить рассмотренным' : 'Вернуть в работу'}</button>`;
+          }
+          if (manager || r.user_id === SITE.me.id) {
+            actions += `<button class="btn small danger" onclick="deleteReport(${r.id})">Удалить</button>`;
+          }
+          const photosCount = (r.photos || []).length;
+          return `
+          <div class="report-card reveal ${r.status}" style="--rd:${Math.min(i * 70, 280)}ms">
+            <div class="report-strip ${r.type}"></div>
+            <div class="report-head">
+              <div class="rep-stamp">${statusHtml(r.status)}</div>
+              <div class="rep-title">РАПОРТ</div>
+              <div class="rep-type">${typeLabel[r.type] || 'Рапорт'}</div>
+              <div class="rep-to">Командованию О.Б.Р.</div>
+              <div class="rep-from">${avatarInline(r)} От <b>${esc(r.signature || r.username || '—')}</b></div>
+            </div>
+            <div class="report-meta">
+              <span><b>Автор:</b> ${esc(r.username || '—')}</span>
+              <span><b>Дата:</b> ${esc(r.date)}</span>
+              <span><b>Отправлено:</b> ${formatDate(r.created_at)}</span>
+            </div>
+            <div class="report-body">
+              ${r.v_from && r.v_to ? `<div class="rep-vacation"><b>Отпуск:</b> с ${esc(r.v_from)} по ${esc(r.v_to)}</div>` : ''}
+              <div class="rep-theme"><b>Тема:</b> ${esc(r.theme)}</div>
+              <div class="rep-text">${esc(r.text)}</div>
+              ${r.attachments ? `<div class="rep-attachments"><b>Приложения:</b> ${esc(r.attachments)}</div>` : ''}
+            </div>
+            ${photosCount ? `<div class="report-photos-block"><div class="rep-photos-title">Приложенные фото и скриншоты (${photosCount})</div>${photosHtml(r)}</div>` : ''}
+            <div class="report-sign">
+              ${r.status === 'done' && r.reviewed_at ? `<div class="rep-review">Рассмотрено командованием: ${formatDate(r.reviewed_at)}</div>` : ''}
+              <div class="rep-sig-line">Подпись: <i>${esc(r.signature || '—')}</i></div>
+            </div>
+            ${actions ? `<div class="report-actions"><div class="row-actions">${actions}</div></div>` : ''}
+          </div>`;
+        })
+        .join('');
     } catch (e) {
       showAlert(alertEl, 'err', e.message);
+      const list = document.getElementById('reports-list');
+      if (list) {
+        list.innerHTML = `<div class="empty" style="color:var(--danger,#e5484d)">Не удалось загрузить рапорты: ${esc(e.message)}<br><button class="btn small" style="margin-top:10px" onclick="location.reload()">Повторить</button></div>`;
+      }
     }
   }
   await load();
