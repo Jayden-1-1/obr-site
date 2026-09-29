@@ -2413,58 +2413,51 @@ a.btn.discord-nav-btn:hover {
   pointer-events: none;
 }
 
-/* При уходе со страницы: прозрачная волна размытия накатывает справа налево */
+/* При переходе: плавно накрывает размытие справа налево без цвета */
 body.page-leaving .page-wave-transition {
   visibility: visible;
-  animation: waveBlurSweepLeave 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: waveBlurCoverSmooth 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 body.page-leaving > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
-  filter: blur(8px);
-  opacity: 0.82;
-  transition: filter 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.34s ease;
+  filter: blur(6px);
+  opacity: 0.85;
+  transition: filter 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease;
   pointer-events: none !important;
 }
 
-@keyframes waveBlurSweepLeave {
+@keyframes waveBlurCoverSmooth {
   0% {
     transform: translateX(100%);
-    opacity: 1;
   }
   100% {
     transform: translateX(0%);
-    opacity: 1;
   }
 }
 
-/* При входе на страницу: прозрачная волна размытия плавно сходит влево и растворяется */
+/* Когда загрузило: быстро снимаем размытие обратно вправо */
 body.page-entering .page-wave-transition {
   visibility: visible;
-  animation: waveBlurDissolveEnter 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: waveBlurRetreatFast 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
 body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
-  animation: pageBlurRestore 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageBlurUncoverFast 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-@keyframes waveBlurDissolveEnter {
+@keyframes waveBlurRetreatFast {
   0% {
     transform: translateX(0%);
-    opacity: 1;
-  }
-  30% {
-    opacity: 0.9;
   }
   100% {
-    transform: translateX(-105%);
-    opacity: 0;
+    transform: translateX(100%);
   }
 }
 
-@keyframes pageBlurRestore {
+@keyframes pageBlurUncoverFast {
   0% {
-    filter: blur(8px);
-    opacity: 0.82;
+    filter: blur(6px);
+    opacity: 0.85;
   }
   100% {
     filter: blur(0px);

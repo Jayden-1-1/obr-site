@@ -372,14 +372,14 @@ function initPageTransitions() {
 
   ensureWaveTransitionEl();
 
-  // Плавный вход на страницу: волна прозрачного размытия сходит влево и растворяется
+  // Быстро снимаем размытие обратно вправо при загрузке
   document.body.classList.remove('page-leaving');
   document.body.classList.add('page-entering');
 
   setTimeout(() => {
     document.body.classList.remove('page-entering');
     document.body.classList.add('page-settled');
-  }, 520);
+  }, 280);
 
   // Сброс при возврате через историю браузера (bfcache)
   window.addEventListener('pageshow', () => {
@@ -387,7 +387,7 @@ function initPageTransitions() {
     document.body.classList.add('page-settled');
   });
 
-  // Перехват кликов по внутренним ссылкам: запуск реалистичной волны справа налево
+  // Перехват кликов по внутренним ссылкам: плавно накрываем экран размытием справа налево
   document.addEventListener('click', (e) => {
     const link = e.target.closest('a');
     if (!link) return;
@@ -423,14 +423,14 @@ function initPageTransitions() {
       return;
     }
 
-    // Запуск прозрачной волны размытия справа налево
+    // Плавно накрываем прозрачное размытие справа налево
     e.preventDefault();
     document.body.classList.remove('page-entering', 'page-settled');
     document.body.classList.add('page-leaving');
 
     setTimeout(() => {
       window.location.href = targetUrl.href;
-    }, 360);
+    }, 380);
   });
 }
 
