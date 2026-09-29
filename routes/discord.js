@@ -17,6 +17,7 @@ const router = express.Router();
 const ALLOWED_HOSTS = process.env.ALLOWED_HOSTS
   ? process.env.ALLOWED_HOSTS.split(',').map((s) => s.trim()).filter(Boolean)
   : [
+      'obr-site.onrender.com',
       'obr-site-production.up.railway.app',
       'obr-site-proxy.obr-site.workers.dev',
       'obr-site-proxy.winkston.workers.dev',
