@@ -298,7 +298,11 @@ async function initHeader(active) {
   initDeveloperBadge();
   initReveal();
   initPageTransitions();
-  initButtonRipples();
+  initButtonPhysics();
+  init3DTilt();
+  initCyberCursorAura();
+  initBorderBeams();
+  initCounterRoll();
 }
 
 async function initNewsTicker() {
@@ -351,10 +355,103 @@ function ensureWaveTransitionEl() {
     el = document.createElement('div');
     el.id = 'page-wave-transition';
     el.className = 'page-wave-transition';
-    el.innerHTML = '<div class="page-wave-layer"></div><div class="page-wave-beam"></div>';
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = `
+      <canvas id="wave-spray-canvas" class="wave-spray-canvas"></canvas>
+      <div class="page-wave-body">
+        <svg class="wave-fluid-svg" viewBox="0 0 260 1000" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="waveCrestGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00f5d4" stop-opacity="1" />
+              <stop offset="50%" stop-color="#5865f2" stop-opacity="1" />
+              <stop offset="100%" stop-color="#7928ca" stop-opacity="1" />
+            </linearGradient>
+          </defs>
+          <path class="wave-swell" d="M260,0 C140,160 210,360 110,540 C30,720 170,860 260,1000 L260,0 Z"></path>
+          <path class="wave-subcrest" d="M260,0 C170,130 90,290 160,470 C220,650 85,820 260,1000 L260,0 Z"></path>
+          <path class="wave-crest" d="M260,0 C100,150 230,330 50,500 C-15,640 185,810 260,1000 L260,0 Z"></path>
+          <path class="wave-caustic" d="M260,0 C100,150 230,330 50,500 C-15,640 185,810 260,1000" fill="none" stroke="url(#waveCrestGlow)" stroke-width="6"></path>
+        </svg>
+        <div class="wave-caustic-light"></div>
+      </div>
+    `;
     document.body.appendChild(el);
   }
   return el;
+}
+
+let __waveCanvasRaf = null;
+
+function triggerWaveFluidSpray(direction = 'leave') {
+  const canvas = document.getElementById('wave-spray-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const w = (canvas.width = window.innerWidth);
+  const h = (canvas.height = window.innerHeight);
+
+  if (__waveCanvasRaf) cancelAnimationFrame(__waveCanvasRaf);
+
+  const colors = ['#00f5d4', '#5865f2', '#57f287', '#38bdf8', '#c084fc'];
+  const particles = [];
+  const count = 48;
+  const startX = direction === 'leave' ? w * 0.85 : w * 0.25;
+
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: startX + (Math.random() - 0.5) * 120,
+      y: Math.random() * h,
+      vx: -(Math.random() * 12 + 6),
+      vy: (Math.random() - 0.5) * 5,
+      size: Math.random() * 3.5 + 1.5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.5 + 0.5,
+      decay: Math.random() * 0.02 + 0.02,
+      wobble: Math.random() * Math.PI * 2,
+    });
+  }
+
+  const start = performance.now();
+  const maxDur = 450;
+
+  function render(time) {
+    const elapsed = time - start;
+    if (elapsed > maxDur || particles.length === 0) {
+      ctx.clearRect(0, 0, w, h);
+      return;
+    }
+
+    ctx.clearRect(0, 0, w, h);
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.wobble += 0.12;
+      p.y += p.vy + Math.sin(p.wobble) * 1.5;
+      p.vx *= 0.96;
+      p.alpha -= p.decay;
+
+      if (p.alpha <= 0 || p.x < -50) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = p.size * 3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    __waveCanvasRaf = requestAnimationFrame(render);
+  }
+
+  __waveCanvasRaf = requestAnimationFrame(render);
 }
 
 function initPageTransitions() {
@@ -363,21 +460,23 @@ function initPageTransitions() {
 
   ensureWaveTransitionEl();
 
-  // Плавный вход на страницу: волна уходит влево, возвращая резкость
+  // Плавный вход на страницу с физикой и рассеиванием волны влево
   document.body.classList.remove('page-leaving');
   document.body.classList.add('page-entering');
+  triggerWaveFluidSpray('enter');
+
   setTimeout(() => {
     document.body.classList.remove('page-entering');
     document.body.classList.add('page-settled');
-  }, 440);
+  }, 480);
 
-  // Сброс при навигации назад/вперед в браузере (bfcache)
+  // Сброс при возврате через историю браузера (bfcache)
   window.addEventListener('pageshow', () => {
     document.body.classList.remove('page-leaving');
     document.body.classList.add('page-settled');
   });
 
-  // Перехват кликов по внутренним ссылкам для волновой анимации
+  // Перехват кликов по внутренним ссылкам: запуск реалистичной волны справа налево
   document.addEventListener('click', (e) => {
     const link = e.target.closest('a');
     if (!link) return;
@@ -413,49 +512,205 @@ function initPageTransitions() {
       return;
     }
 
-    // Запуск волны справа налево с размытием
+    // Запуск физической волны справа налево с размытием
     e.preventDefault();
     document.body.classList.remove('page-entering', 'page-settled');
     document.body.classList.add('page-leaving');
+    triggerWaveFluidSpray('leave');
 
     setTimeout(() => {
       window.location.href = targetUrl.href;
-    }, 330);
+    }, 380);
   });
 }
 
-function initButtonRipples() {
-  if (window.__btnRipplesInit) return;
-  window.__btnRipplesInit = true;
+/* ---------- 2. Кинетическая физика кнопок (Haptic Bounce & Shockwaves) ---------- */
+function initButtonPhysics() {
+  if (window.__btnPhysicsInit) return;
+  window.__btnPhysicsInit = true;
 
   document.addEventListener('pointerdown', (e) => {
     const btn = e.target.closest('.btn');
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    const circle = document.createElement('span');
-    const diameter = Math.max(rect.width, rect.height);
-    const radius = diameter / 2;
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${e.clientX - rect.left - radius}px`;
-    circle.style.top = `${e.clientY - rect.top - radius}px`;
-    circle.className = 'btn-ripple';
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const maxDim = Math.max(rect.width, rect.height);
 
-    const prev = btn.querySelector('.btn-ripple');
-    if (prev) prev.remove();
-    btn.appendChild(circle);
+    btn.querySelectorAll('.btn-shockwave-ring').forEach((r) => r.remove());
 
-    setTimeout(() => circle.remove(), 550);
+    const ring1 = document.createElement('span');
+    ring1.className = 'btn-shockwave-ring cyan';
+    ring1.style.width = ring1.style.height = `${maxDim}px`;
+    ring1.style.left = `${x - maxDim / 2}px`;
+    ring1.style.top = `${y - maxDim / 2}px`;
+
+    const ring2 = document.createElement('span');
+    ring2.className = 'btn-shockwave-ring blurple';
+    ring2.style.width = ring2.style.height = `${maxDim * 1.2}px`;
+    ring2.style.left = `${x - (maxDim * 1.2) / 2}px`;
+    ring2.style.top = `${y - (maxDim * 1.2) / 2}px`;
+
+    btn.appendChild(ring1);
+    btn.appendChild(ring2);
+
+    setTimeout(() => {
+      ring1.remove();
+      ring2.remove();
+    }, 600);
   });
+}
+
+/* ---------- 3. Магнитный интерактивный 3D-наклон карточек (3D Magnetic Tilt) ---------- */
+function init3DTilt() {
+  if (window.__tiltInit) return;
+  window.__tiltInit = true;
+
+  const selector = '.card, .settings-card, .stat-card, .doc-item, .panel, .dev-badge';
+
+  const setupElement = (el) => {
+    if (el.dataset.tiltReady) return;
+    el.dataset.tiltReady = '1';
+    el.classList.add('interactive-tilt');
+
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const rotX = -((y - cy) / cy) * 5;
+      const rotY = ((x - cx) / cx) * 6;
+
+      el.style.transform = `perspective(900px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-3px)`;
+      el.style.setProperty('--specular-x', `${x}px`);
+      el.style.setProperty('--specular-y', `${y}px`);
+    });
+
+    el.addEventListener('mouseleave', () => {
+      el.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0)';
+    });
+  };
+
+  document.querySelectorAll(selector).forEach(setupElement);
+
+  if (window.MutationObserver) {
+    new MutationObserver(() => {
+      document.querySelectorAll(selector).forEach(setupElement);
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+}
+
+/* ---------- 4. Кибернетическая плавная аура курсора (Ambient Cursor Aura) ---------- */
+function initCyberCursorAura() {
+  if (window.__cursorAuraInit) return;
+  window.__cursorAuraInit = true;
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
+
+  let aura = document.getElementById('ambient-aura');
+  if (!aura) {
+    aura = document.createElement('div');
+    aura.id = 'ambient-aura';
+    aura.className = 'ambient-cursor-aura';
+    document.body.appendChild(aura);
+  }
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let currentX = mouseX;
+  let currentY = mouseY;
+  let isMoving = false;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    if (!isMoving) {
+      isMoving = true;
+      loop();
+    }
+  });
+
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('.btn, a, input, select, textarea, .card, .settings-card')) {
+      aura.classList.add('active-hover');
+    } else {
+      aura.classList.remove('active-hover');
+    }
+  });
+
+  function loop() {
+    currentX += (mouseX - currentX) * 0.12;
+    currentY += (mouseY - currentY) * 0.12;
+
+    aura.style.left = `${currentX}px`;
+    aura.style.top = `${currentY}px`;
+
+    if (Math.abs(mouseX - currentX) > 0.1 || Math.abs(mouseY - currentY) > 0.1) {
+      requestAnimationFrame(loop);
+    } else {
+      isMoving = false;
+    }
+  }
+}
+
+/* ---------- 5. Неоновый бегущий лазер по граням (Border Beam Runner) ---------- */
+function initBorderBeams() {
+  const targets = document.querySelectorAll('.discord-linked-glow, #dev-badge, #news-card');
+  targets.forEach((el) => {
+    if (el.querySelector('.border-beam')) return;
+    const beam = document.createElement('div');
+    beam.className = 'border-beam';
+    el.style.position = 'relative';
+    el.appendChild(beam);
+  });
+}
+
+/* ---------- 6. Плавная прокрутка счётчиков цифр (Counter Roll) ---------- */
+function initCounterRoll() {
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          const el = e.target;
+          const targetVal = parseInt(el.textContent.replace(/\D/g, ''), 10);
+          if (isNaN(targetVal) || targetVal <= 0 || el.dataset.rolled) return;
+          el.dataset.rolled = '1';
+          let startVal = 0;
+          const duration = 1200;
+          const startTime = performance.now();
+          const tick = (now) => {
+            const p = Math.min((now - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - p, 3);
+            el.textContent = Math.round(startVal + (targetVal - startVal) * ease);
+            if (p < 1) requestAnimationFrame(tick);
+            else el.textContent = targetVal;
+          };
+          requestAnimationFrame(tick);
+        }
+      });
+    },
+    { threshold: 0.2 }
+  );
+
+  document.querySelectorAll('.stat-val, .counter-num, .roster-count').forEach((el) => io.observe(el));
 }
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     initPageTransitions();
-    initButtonRipples();
+    initButtonPhysics();
+    init3DTilt();
+    initCyberCursorAura();
+    initBorderBeams();
+    initCounterRoll();
   });
 } else {
   initPageTransitions();
-  initButtonRipples();
+  initButtonPhysics();
+  init3DTilt();
+  initCyberCursorAura();
+  initBorderBeams();
+  initCounterRoll();
 }
 
 async function refreshHeaderUser() {
