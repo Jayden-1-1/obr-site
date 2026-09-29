@@ -17,9 +17,51 @@ const {
 const { upload, AVATAR_MIME } = require('../middleware/upload');
 const { SECURITY_QUESTIONS, normalizeAnswer, sendEmailCode, consumeCode } = require('../services/codeService');
 const { currentCommander, ensureCommanderInRoster } = require('../services/rosterService');
+const discord = require('../discord');
 
 const router = express.Router();
 const AVATAR_MAX = 5 * 1024 * 1024;
+
+// Update username / callsign
+router.post(
+  '/me/username',
+  requireAuth,
+  api((req, res) => {
+    const raw = String(req.body.username || '').trim();
+    if (!raw) return fail(res, 400, 'Введите новый никнейм');
+    if (raw.length < 3) return fail(res, 400, 'Никнейм должен быть не короче 3 символов');
+    if (raw.length > 32) return fail(res, 400, 'Никнейм должен быть не длиннее 32 символов');
+    if (!/^[a-zA-Z0-9_а-яА-ЯёЁ\s-]+$/.test(raw)) {
+      return fail(res, 400, 'Никнейм может содержать только буквы, цифры, дефис, пробел и подчёркивание');
+    }
+    const existing = db
+      .prepare('SELECT id FROM users WHERE LOWER(username) = LOWER(?) AND id != ?')
+      .get(raw, req.user.id);
+    if (existing) {
+      return fail(res, 409, 'Этот никнейм уже занят другим пользователем');
+    }
+    const oldUsername = req.user.username;
+    db.prepare('UPDATE users SET username = ? WHERE id = ?').run(raw, req.user.id);
+
+    // Sync callsign in roster if user had their username as callsign
+    const inRoster = db.prepare('SELECT id, callsign FROM roster WHERE user_id = ?').get(req.user.id);
+    if (inRoster && inRoster.callsign === oldUsername) {
+      db.prepare('UPDATE roster SET callsign = ? WHERE id = ?').run(raw, inRoster.id);
+    }
+
+    discord.log({
+      title: 'Смена никнейма',
+      description: `Пользователь **${oldUsername}** сменил никнейм на **${raw}**.`,
+      fields: [
+        { name: 'Старый ник', value: oldUsername, inline: true },
+        { name: 'Новый ник', value: raw, inline: true },
+      ],
+      color: discord.COLOR_BLUE,
+    });
+
+    res.json({ ok: true, user: publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id)) });
+  })
+);
 
 // Update profile "about"
 router.post(

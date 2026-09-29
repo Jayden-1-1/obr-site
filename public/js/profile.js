@@ -54,6 +54,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ---------- Смена никнейма ----------
+  const usernameBadge = document.getElementById('current-username-badge');
+  const usernameInput = document.getElementById('p-username-input');
+  if (usernameBadge) usernameBadge.textContent = user.username;
+  if (usernameInput) usernameInput.value = user.username;
+
+  document.getElementById('p-username-save').addEventListener('click', async () => {
+    const nextName = (usernameInput ? usernameInput.value : '').trim();
+    if (!nextName) {
+      showAlert(alertEl, 'err', 'Введите новый никнейм');
+      return;
+    }
+    try {
+      const data = await apiFetch('/api/users/me/username', {
+        method: 'POST',
+        body: JSON.stringify({ username: nextName }),
+      });
+      SITE.me = data.user;
+      user.username = data.user.username;
+      document.getElementById('p-username').textContent = user.username;
+      if (usernameBadge) usernameBadge.textContent = user.username;
+      renderAvatar();
+      await refreshHeaderUser();
+      showAlert(alertEl, 'ok', `Никнейм успешно изменён на «${user.username}»`);
+      showToast('ok', 'Никнейм обновлён');
+    } catch (e) {
+      showAlert(alertEl, 'err', e.message);
+    }
+  });
+
   // ---------- О себе ----------
   document.getElementById('p-about-save').addEventListener('click', async () => {
     try {
@@ -161,6 +191,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (isCommander(user)) {
     const newsCard = document.getElementById('news-card');
     newsCard.style.display = '';
+    const nEnabled = document.getElementById('n-enabled');
+    const nMode = document.getElementById('n-mode');
+    const nSpeed = document.getElementById('n-speed');
     const nText = document.getElementById('n-text');
     const nCount = document.getElementById('n-count');
     const updateCount = () => {
@@ -170,6 +203,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const data = await apiFetch('/api/news');
+      if (nEnabled) nEnabled.checked = !!data.enabled;
+      if (nMode) nMode.value = data.mode || 'info';
+      if (nSpeed) nSpeed.value = data.speed || 'normal';
       nText.value = data.text || '';
     } catch (_) {}
     updateCount();
@@ -178,11 +214,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const data = await apiFetch('/api/news', {
           method: 'PUT',
-          body: JSON.stringify({ text: nText.value }),
+          body: JSON.stringify({
+            text: nText.value,
+            enabled: nEnabled ? nEnabled.checked : true,
+            mode: nMode ? nMode.value : 'info',
+            speed: nSpeed ? nSpeed.value : 'normal',
+          }),
         });
         nText.value = data.text;
+        if (nEnabled) nEnabled.checked = !!data.enabled;
+        if (nMode) nMode.value = data.mode;
+        if (nSpeed) nSpeed.value = data.speed;
         updateCount();
-        showAlert(alertEl, 'ok', 'Новостная строка обновлена');
+        showAlert(alertEl, 'ok', 'Настройки бегущей строки сохранены');
+        showToast('ok', 'Бегущая строка обновлена');
+        initNewsTicker();
       } catch (e) {
         showAlert(alertEl, 'err', e.message);
       }
@@ -192,19 +238,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ---------- Discord ----------
   const discordCard = document.getElementById('discord-card');
   const discordStatus = document.getElementById('discord-status');
+  const discordGlowBox = document.getElementById('discord-glow-box');
+  const discordGlowName = document.getElementById('discord-glow-name');
   const discordLinkBtn = document.getElementById('discord-link');
+  const discordRelinkBtn = document.getElementById('discord-relink');
   const discordUnlinkBtn = document.getElementById('discord-unlink');
 
   async function loadDiscordStatus() {
     try {
       const data = await apiFetch('/api/discord/me');
       if (data.linked) {
-        discordStatus.textContent = 'Привязано: @' + data.username;
+        if (discordGlowBox) {
+          discordGlowBox.style.display = 'flex';
+          discordGlowName.textContent = '@' + data.username;
+        }
+        discordStatus.textContent = 'Учётная запись привязана и синхронизирована с сервером Discord.';
         discordLinkBtn.style.display = 'none';
-        discordUnlinkBtn.style.display = '';
+        if (discordRelinkBtn) discordRelinkBtn.style.display = 'inline-flex';
+        discordUnlinkBtn.style.display = 'inline-flex';
       } else {
-        discordStatus.textContent = 'Не привязано';
-        discordLinkBtn.style.display = '';
+        if (discordGlowBox) discordGlowBox.style.display = 'none';
+        discordStatus.textContent = 'Discord не привязан.';
+        discordLinkBtn.style.display = 'inline-flex';
+        if (discordRelinkBtn) discordRelinkBtn.style.display = 'none';
         discordUnlinkBtn.style.display = 'none';
       }
     } catch (e) {
@@ -214,14 +270,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadDiscordStatus();
   discordCard.style.display = '';
 
-  discordLinkBtn.addEventListener('click', async () => {
+  const startDiscordOAuth = async () => {
     try {
       const data = await apiFetch('/api/discord/link', { method: 'POST' });
       window.location.href = data.url;
     } catch (e) {
       showAlert(alertEl, 'err', e.message);
     }
-  });
+  };
+
+  discordLinkBtn.addEventListener('click', startDiscordOAuth);
+  if (discordRelinkBtn) discordRelinkBtn.addEventListener('click', startDiscordOAuth);
 
   discordUnlinkBtn.addEventListener('click', async () => {
     const ok = await showConfirmModal({

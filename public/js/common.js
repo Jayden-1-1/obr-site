@@ -297,6 +297,8 @@ async function initHeader(active) {
 
   initDeveloperBadge();
   initReveal();
+  initPageTransitions();
+  initButtonRipples();
 }
 
 async function initNewsTicker() {
@@ -305,12 +307,29 @@ async function initNewsTicker() {
     const ticker = document.getElementById('news-ticker');
     if (!ticker) return;
     const track = document.getElementById('news-track');
-    const text = data.text || '';
-    if (!text) {
+    const text = (data.text || '').trim();
+    if (data.enabled === false || !text) {
       ticker.style.display = 'none';
       return;
     }
-    ticker.style.display = '';
+    ticker.style.display = 'flex';
+    ticker.classList.remove('mode-info', 'mode-alert', 'mode-urgent');
+    const mode = ['info', 'alert', 'urgent'].includes(data.mode) ? data.mode : 'info';
+    ticker.classList.add('mode-' + mode);
+
+    const labelEl = ticker.querySelector('.news-label');
+    if (labelEl) {
+      if (mode === 'alert') labelEl.textContent = 'ВНИМАНИЕ';
+      else if (mode === 'urgent') labelEl.textContent = 'ПРИКАЗ';
+      else labelEl.textContent = 'СВОДКА';
+    }
+
+    const speed = data.speed || 'normal';
+    let duration = 26;
+    if (speed === 'slow') duration = 40;
+    if (speed === 'fast') duration = 16;
+    track.style.animationDuration = duration + 's';
+
     const tickerW = ticker.clientWidth || window.innerWidth;
     const probe = document.createElement('span');
     probe.textContent = text;
@@ -318,12 +337,125 @@ async function initNewsTicker() {
     document.body.appendChild(probe);
     const one = probe.offsetWidth;
     probe.remove();
-    const copies = 2 * Math.max(1, Math.ceil((tickerW + 32) / (one + 32)));
+    const copies = 2 * Math.max(1, Math.ceil((tickerW + 48) / (one + 48)));
     track.innerHTML = Array(copies).fill(`<span>${esc(text)}</span>`).join('');
   } catch (_) {
     const ticker = document.getElementById('news-ticker');
     if (ticker) ticker.style.display = 'none';
   }
+}
+
+function ensureWaveTransitionEl() {
+  let el = document.getElementById('page-wave-transition');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'page-wave-transition';
+    el.className = 'page-wave-transition';
+    el.innerHTML = '<div class="page-wave-layer"></div><div class="page-wave-beam"></div>';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function initPageTransitions() {
+  if (window.__pageTransitionsInit) return;
+  window.__pageTransitionsInit = true;
+
+  ensureWaveTransitionEl();
+
+  // Плавный вход на страницу: волна уходит влево, возвращая резкость
+  document.body.classList.remove('page-leaving');
+  document.body.classList.add('page-entering');
+  setTimeout(() => {
+    document.body.classList.remove('page-entering');
+    document.body.classList.add('page-settled');
+  }, 440);
+
+  // Сброс при навигации назад/вперед в браузере (bfcache)
+  window.addEventListener('pageshow', () => {
+    document.body.classList.remove('page-leaving');
+    document.body.classList.add('page-settled');
+  });
+
+  // Перехват кликов по внутренним ссылкам для волновой анимации
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+    const href = link.getAttribute('href');
+    if (!href) return;
+    if (
+      link.target === '_blank' ||
+      link.hasAttribute('download') ||
+      href.startsWith('#') ||
+      href.startsWith('mailto:') ||
+      href.startsWith('tel:') ||
+      href.startsWith('javascript:')
+    ) {
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    if (link.dataset.noTransition !== undefined) return;
+
+    let targetUrl;
+    try {
+      targetUrl = new URL(href, window.location.origin);
+    } catch (_) {
+      return;
+    }
+
+    if (targetUrl.origin !== window.location.origin) return;
+    if (targetUrl.pathname.startsWith('/api/')) return;
+    if (
+      targetUrl.pathname === window.location.pathname &&
+      targetUrl.search === window.location.search &&
+      targetUrl.hash
+    ) {
+      return;
+    }
+
+    // Запуск волны справа налево с размытием
+    e.preventDefault();
+    document.body.classList.remove('page-entering', 'page-settled');
+    document.body.classList.add('page-leaving');
+
+    setTimeout(() => {
+      window.location.href = targetUrl.href;
+    }, 330);
+  });
+}
+
+function initButtonRipples() {
+  if (window.__btnRipplesInit) return;
+  window.__btnRipplesInit = true;
+
+  document.addEventListener('pointerdown', (e) => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const circle = document.createElement('span');
+    const diameter = Math.max(rect.width, rect.height);
+    const radius = diameter / 2;
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${e.clientX - rect.left - radius}px`;
+    circle.style.top = `${e.clientY - rect.top - radius}px`;
+    circle.className = 'btn-ripple';
+
+    const prev = btn.querySelector('.btn-ripple');
+    if (prev) prev.remove();
+    btn.appendChild(circle);
+
+    setTimeout(() => circle.remove(), 550);
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initPageTransitions();
+    initButtonRipples();
+  });
+} else {
+  initPageTransitions();
+  initButtonRipples();
 }
 
 async function refreshHeaderUser() {

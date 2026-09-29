@@ -1639,7 +1639,7 @@ tbody tr { transition: background 0.15s ease; }
 .dev-panel-link:hover { box-shadow: 0 6px 22px rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
 .dev-panel-link:active { transform: scale(0.97); }
 
-/* ---------- Новостная строка ---------- */
+/* ---------- Новостная строка (Сводка / Объявления) ---------- */
 .news-ticker {
   display: flex;
   align-items: stretch;
@@ -1649,7 +1649,9 @@ tbody tr { transition: background 0.15s ease; }
   border: 1px solid rgba(88, 101, 242, 0.35);
   border-radius: 12px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.3s ease, background 0.3s ease;
 }
+
 .news-ticker.header-ticker {
   margin: 0;
   border: none;
@@ -1657,37 +1659,77 @@ tbody tr { transition: background 0.15s ease; }
   border-radius: 0;
   box-shadow: none;
 }
+
+.news-ticker.mode-alert {
+  background: linear-gradient(90deg, rgba(229, 192, 123, 0.16), rgba(229, 192, 123, 0.04));
+  border-bottom-color: rgba(229, 192, 123, 0.45);
+}
+.news-ticker.mode-alert .news-label {
+  background: #e5c07b;
+  color: #16161a;
+}
+
+.news-ticker.mode-urgent {
+  background: linear-gradient(90deg, rgba(229, 72, 77, 0.2), rgba(229, 72, 77, 0.05));
+  border-bottom-color: rgba(229, 72, 77, 0.5);
+  box-shadow: 0 0 16px rgba(229, 72, 77, 0.2);
+}
+.news-ticker.mode-urgent .news-label {
+  background: #e5484d;
+  color: #fff;
+  animation: urgentPulse 2s ease-in-out infinite;
+}
+@keyframes urgentPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.25); }
+}
+
 .news-label {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  padding: 10px 18px;
-  font-size: 13px;
+  padding: 9px 18px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: #fff;
   background: #5865f2;
+  user-select: none;
+  transition: background 0.3s ease, color 0.3s ease;
 }
+
 .news-track-wrap {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  position: relative;
   display: flex;
   align-items: center;
+  /* Физика плавного растворения/исчезания текста по краям */
+  mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
 }
+
 .news-track {
   display: inline-flex;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13.5px;
+  font-weight: 500;
   color: #eceef7;
-  animation: news-scroll 28s linear infinite;
+  animation: news-scroll 26s linear infinite;
   will-change: transform;
 }
+
+.news-ticker:hover .news-track {
+  animation-play-state: paused;
+}
+
 .news-track span {
   display: inline-block;
-  padding: 10px 16px;
+  padding: 8px 24px;
 }
+
 @keyframes news-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -2175,4 +2217,230 @@ a.btn.discord-nav-btn:hover {
 
 .auth-divider span {
   padding: 0 12px;
+}
+
+/* ---------- Discord Linked Glowing Card & Relink Button ---------- */
+.discord-linked-glow {
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.14) 0%, rgba(87, 242, 135, 0.08) 100%);
+  border: 1px solid rgba(88, 101, 242, 0.55);
+  box-shadow: 0 0 24px rgba(88, 101, 242, 0.25), inset 0 0 16px rgba(88, 101, 242, 0.12);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: glowCardPulse 3.5s ease-in-out infinite alternate;
+  position: relative;
+  overflow: hidden;
+}
+
+.discord-linked-glow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transform: skewX(-20deg);
+  animation: cardShimmer 6s infinite;
+  pointer-events: none;
+}
+
+@keyframes cardShimmer {
+  0%, 75% { left: -100%; }
+  100% { left: 200%; }
+}
+
+@keyframes glowCardPulse {
+  0% {
+    border-color: rgba(88, 101, 242, 0.45);
+    box-shadow: 0 0 18px rgba(88, 101, 242, 0.2), inset 0 0 12px rgba(88, 101, 242, 0.08);
+  }
+  100% {
+    border-color: rgba(88, 101, 242, 0.85);
+    box-shadow: 0 0 32px rgba(88, 101, 242, 0.38), inset 0 0 20px rgba(88, 101, 242, 0.18);
+  }
+}
+
+.discord-glow-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.glow-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #57f287;
+  box-shadow: 0 0 10px #57f287, 0 0 20px #57f287;
+  position: relative;
+  display: inline-block;
+}
+
+.glow-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #57f287;
+  animation: glowDotPing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  opacity: 0.75;
+}
+
+@keyframes glowDotPing {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.discord-glow-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f2f4f8;
+  letter-spacing: 0.4px;
+}
+
+.discord-glow-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(88, 101, 242, 0.18);
+  border: 1px solid rgba(88, 101, 242, 0.4);
+  border-radius: 8px;
+  padding: 6px 14px;
+  width: fit-content;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.discord-svg-icon {
+  color: #5865f2;
+}
+
+.btn.relink-btn {
+  background: #5865f2 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn.relink-btn:hover {
+  background: #4752c4 !important;
+  box-shadow: 0 6px 22px rgba(88, 101, 242, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ---------- Уникальная волновая анимация переходов страниц (Right-to-Left Wave) ---------- */
+.page-wave-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  pointer-events: none;
+  overflow: hidden;
+  transform: translateX(100%);
+  display: flex;
+  visibility: hidden;
+}
+
+.page-wave-layer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(270deg, rgba(12, 14, 20, 0.96) 0%, rgba(18, 22, 34, 0.90) 65%, rgba(88, 101, 242, 0.22) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.page-wave-beam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+  background: linear-gradient(180deg, #57f287, #5865f2 50%, #00d4ff);
+  box-shadow: 0 0 35px 8px rgba(88, 101, 242, 0.85), -6px 0 30px 4px rgba(87, 242, 135, 0.55), 0 0 60px 15px rgba(0, 212, 255, 0.4);
+}
+
+/* При уходе со страницы: волна несется справа налево, размывая все */
+body.page-leaving .page-wave-transition {
+  visibility: visible;
+  animation: waveSweepLeave 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+body.page-leaving > *:not(.page-wave-transition) {
+  filter: blur(8px);
+  opacity: 0.75;
+  transform: scale(0.992);
+  transition: filter 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.34s ease, transform 0.34s ease;
+  pointer-events: none !important;
+}
+
+@keyframes waveSweepLeave {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+/* При входе на новую страницу: волна уходит дальше влево, плавно возвращая резкость */
+body.page-entering .page-wave-transition {
+  visibility: visible;
+  animation: waveSweepEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+body.page-entering > *:not(.page-wave-transition) {
+  filter: blur(0px);
+  opacity: 1;
+  transform: scale(1);
+  animation: pageContentUnblur 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes waveSweepEnter {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes pageContentUnblur {
+  0% {
+    filter: blur(6px);
+    opacity: 0.85;
+    transform: scale(0.995);
+  }
+  100% {
+    filter: blur(0px);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- Тактильный микро-отклик кнопок (Tactical Ripple) ---------- */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+  animation: rippleFx 0.5s ease-out forwards;
+}
+
+@keyframes rippleFx {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
 }

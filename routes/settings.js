@@ -69,7 +69,12 @@ router.put(
 router.get(
   '/news',
   api((req, res) => {
-    res.json({ text: getSetting('news_ticker', '') });
+    res.json({
+      text: getSetting('news_ticker', ''),
+      enabled: getSetting('news_ticker_enabled', '1') === '1',
+      mode: getSetting('news_ticker_mode', 'info'),
+      speed: getSetting('news_ticker_speed', 'normal'),
+    });
   })
 );
 
@@ -78,9 +83,23 @@ router.put(
   requireAuth,
   requireCommander,
   api((req, res) => {
-    const text = String(req.body.text || '').trim().slice(0, 100);
+    const text = String(req.body.text || '').trim().slice(0, 300);
+    const enabled = req.body.enabled !== undefined ? (req.body.enabled ? '1' : '0') : getSetting('news_ticker_enabled', '1');
+    const mode = ['info', 'alert', 'urgent'].includes(req.body.mode) ? req.body.mode : 'info';
+    const speed = ['slow', 'normal', 'fast'].includes(req.body.speed) ? req.body.speed : 'normal';
+
     setSetting('news_ticker', text);
-    res.json({ ok: true, text });
+    setSetting('news_ticker_enabled', enabled);
+    setSetting('news_ticker_mode', mode);
+    setSetting('news_ticker_speed', speed);
+
+    res.json({
+      ok: true,
+      text,
+      enabled: enabled === '1',
+      mode,
+      speed,
+    });
   })
 );
 
