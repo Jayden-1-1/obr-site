@@ -83,9 +83,9 @@ app.use(
       if (/\.(jpg|jpeg|png|webp|svg|ico|woff2?|ttf|mp3|ogg)$/i.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
       } else if (/\.(css|js)$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
       } else if (/\.html$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
       }
     },
   })
