@@ -180,6 +180,8 @@ ensureColumn('punishments', 'until_date', 'TEXT', '');
 ensureColumn('punishments', 'issued_by', 'TEXT', '');
 ensureColumn('punishments', 'reason', 'TEXT', '');
 ensureColumn('punishments', 'callsign', 'TEXT', '');
+ensureColumn('punishments', 'remove_reason', 'TEXT', '');
+ensureColumn('punishments', 'removed_by', 'TEXT', '');
 
 try {
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower ON users(LOWER(username))');

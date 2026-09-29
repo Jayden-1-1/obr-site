@@ -10,7 +10,7 @@ function untilExpired(untilDate) {
 
 function punishmentStatus(p) {
   if (p.status === 'removed') return 'removed';
-  if (untilExpired(p.until_date)) return 'expired';
+  if (p.status === 'expired' || untilExpired(p.until_date)) return 'expired';
   return 'active';
 }
 
@@ -51,9 +51,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         .map((p, i) => {
           const status = punishmentStatus(p);
           let actions = '';
-          if (manager && status !== 'removed') {
+          if (manager && status === 'active') {
             actions += `<button class="btn small" onclick="removePunishment(${p.id})">Снять наказание</button>`;
           }
+          const removeReasonText = p.remove_reason || (status === 'expired' ? 'Время выговора истекло' : '');
           return `
           <div class="report-card reveal punishment-card ${status}" style="--rd:${Math.min(i * 70, 280)}ms">
             <div class="report-strip punishment ${status}"></div>
@@ -76,6 +77,11 @@ document.addEventListener('DOMContentLoaded', async () => {
               ${status === 'expired' ? '<span class="pun-note">— срок истёк, выговор отбыт</span>' : ''}
               ${status === 'removed' && p.removed_at ? `<span class="pun-note">— снято: ${formatDate(p.removed_at)}</span>` : ''}
             </div>
+            ${removeReasonText ? `
+            <div class="punishment-remove-box" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);font-size:13px;color:var(--text-muted,#9ca3af)">
+              <b style="color:var(--text-primary,#f3f4f6)">Причина снятия:</b> ${esc(removeReasonText)}
+              ${p.removed_by ? `<span style="opacity:0.8"> (снял: ${esc(p.removed_by)})</span>` : ''}
+            </div>` : ''}
             ${actions ? `<div class="report-actions"><div class="row-actions">${actions}</div></div>` : ''}
           </div>`;
         })
@@ -90,15 +96,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   window.removePunishment = async (id) => {
-    const ok = await showConfirmModal({
+    const reason = await showPromptModal({
       title: 'Снятие наказания',
-      message: 'Снять это наказание? Выговор у сотрудника в личном деле будет аннулирован.',
+      message: 'Укажите причину снятия выговора (будет записана в базу данных и отправлена в Discord):',
+      placeholder: 'Например: Отличная служба / По решению командира...',
       confirmText: 'Снять наказание',
-      danger: false,
+      required: true,
     });
-    if (!ok) return;
+    if (!reason) return;
     try {
-      await apiFetch(`/api/punishments/${id}/remove`, { method: 'POST' });
+      await apiFetch(`/api/punishments/${id}/remove`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      });
       await load();
       showToast('ok', 'Наказание успешно снято');
     } catch (e) {

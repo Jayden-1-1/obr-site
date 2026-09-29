@@ -220,6 +220,48 @@ function cleanupUploaded(photos) {
   }
 }
 
+function cleanExpiredPunishments() {
+  const now = todayISO();
+  const activePuns = db
+    .prepare("SELECT * FROM punishments WHERE status = 'active' AND until_date != ''")
+    .all();
+
+  const expired = activePuns.filter((p) => {
+    const iso = toISODate(p.until_date);
+    return iso && iso < now;
+  });
+
+  for (const p of expired) {
+    db.prepare(
+      `UPDATE punishments 
+       SET status = 'expired', 
+           removed_at = datetime('now', 'localtime'), 
+           remove_reason = 'Время выговора истекло', 
+           removed_by = 'Система' 
+       WHERE id = ?`
+    ).run(p.id);
+
+    if (p.roster_id) {
+      db.prepare('UPDATE roster SET warnings = MAX(warnings - 1, 0) WHERE id = ?').run(p.roster_id);
+      const entry = db.prepare('SELECT * FROM roster WHERE id = ?').get(p.roster_id);
+      if (entry) {
+        syncMemberDiscordRoles(entry.user_id, entry);
+        discordOnWarning(
+          entry.user_id,
+          p.callsign,
+          'Выговор снят (автоматически)',
+          `**Причина снятия:** Время выговора истекло\n**Срок действия был до:** ${p.until_date}\n**За что выносился:** ${p.reason || '—'}`
+        );
+      }
+    }
+  }
+
+  if (expired.length) {
+    console.log(`[PUNISHMENTS] Истёкшие выговоры сняты: ${expired.length}`);
+  }
+  return expired.length;
+}
+
 module.exports = {
   currentCommander,
   roleForPosition,
@@ -238,5 +280,6 @@ module.exports = {
   discordOnDismissal,
   discordOnWarning,
   discordOnVacation,
+  cleanExpiredPunishments,
   cleanupUploaded,
 };

@@ -134,14 +134,19 @@ function submitWarning() {
 }
 
 async function removeWarning(id) {
-  const ok = await showConfirmModal({
+  const reason = await showPromptModal({
     title: 'Снятие выговора',
-    message: 'Снять выговор у данного сотрудника?',
+    message: 'Укажите причину снятия выговора (будет записана в базу данных и отправлена в Discord):',
+    placeholder: 'Например: Отличная служба / По решению командира / Закрытие взыскания...',
     confirmText: 'Снять выговор',
+    required: true,
   });
-  if (!ok) return;
+  if (!reason) return;
   try {
-    await apiFetch(`/api/roster/${id}/unwarning`, { method: 'POST' });
+    await apiFetch(`/api/roster/${id}/unwarning`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
     showToast('ok', 'Выговор снят');
     await load();
   } catch (e) {

@@ -184,6 +184,93 @@ function showConfirmModal({
   });
 }
 
+/* ---------- Тактическое модальное окно ввода (Prompt) ---------- */
+function showPromptModal({
+  title = 'Причина действия',
+  message = 'Укажите причину:',
+  placeholder = 'Введите причину...',
+  defaultValue = '',
+  confirmText = 'Подтвердить',
+  cancelText = 'Отмена',
+  required = true,
+  danger = false,
+} = {}) {
+  return new Promise((resolve) => {
+    let modalEl = document.getElementById('app-prompt-modal');
+    if (!modalEl) {
+      modalEl = document.createElement('div');
+      modalEl.id = 'app-prompt-modal';
+      modalEl.className = 'modal-backdrop confirm-backdrop';
+      document.body.appendChild(modalEl);
+    }
+
+    modalEl.innerHTML = `
+      <div class="modal confirm-modal prompt-modal" role="dialog" aria-modal="true">
+        <div class="confirm-head">
+          <div class="confirm-badge">${danger ? 'ВНИМАНИЕ' : 'ВВОД ДАННЫХ'}</div>
+          <h3>${esc(title)}</h3>
+        </div>
+        <div class="confirm-body">
+          <p>${esc(message)}</p>
+          <div class="field" style="margin-top:14px">
+            <textarea id="prompt-input-val" class="input" rows="3" placeholder="${esc(placeholder)}" style="width:100%;resize:vertical;font-size:14px;min-height:75px;box-sizing:border-box">${esc(defaultValue)}</textarea>
+            <div id="prompt-input-err" style="color:var(--danger,#ef4444);font-size:12px;margin-top:5px;display:none">Пожалуйста, укажите причину</div>
+          </div>
+        </div>
+        <div class="confirm-actions">
+          <button type="button" class="btn" id="prompt-cancel-btn">${esc(cancelText)}</button>
+          <button type="button" class="btn ${danger ? 'danger' : 'primary'}" id="prompt-ok-btn">${esc(confirmText)}</button>
+        </div>
+      </div>
+    `;
+
+    const inputEl = document.getElementById('prompt-input-val');
+    const errEl = document.getElementById('prompt-input-err');
+
+    modalEl.style.display = 'flex';
+    setTimeout(() => {
+      modalEl.classList.add('in');
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.select();
+      }
+    }, 10);
+
+    const cleanup = (result) => {
+      modalEl.classList.remove('in');
+      setTimeout(() => {
+        modalEl.style.display = 'none';
+        modalEl.innerHTML = '';
+        resolve(result);
+      }, 200);
+      document.removeEventListener('keydown', onKey);
+    };
+
+    const submit = () => {
+      const val = (inputEl ? inputEl.value : '').trim();
+      if (required && !val) {
+        if (errEl) errEl.style.display = 'block';
+        if (inputEl) inputEl.focus();
+        return;
+      }
+      cleanup(val);
+    };
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') cleanup(null);
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit();
+    };
+
+    document.addEventListener('keydown', onKey);
+    document.getElementById('prompt-cancel-btn').addEventListener('click', () => cleanup(null));
+    document.getElementById('prompt-ok-btn').addEventListener('click', submit);
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) cleanup(null);
+    });
+  });
+}
+
+
 function optionsHtml(list, selected) {
   return list
     .map((r) => `<option value="${esc(r)}" ${r === selected ? 'selected' : ''}>${esc(r)}</option>`)
@@ -357,8 +444,9 @@ function ensureWaveTransitionEl() {
     el.className = 'page-wave-transition';
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML = `
-      <div class="page-wave-blur-pane">
-        <div class="page-wave-glass-edge"></div>
+      <div class="page-liquid-glass-sheet">
+        <div class="liquid-glass-rim"></div>
+        <div class="liquid-glass-specular"></div>
       </div>
     `;
     document.body.appendChild(el);
@@ -512,13 +600,12 @@ function init3DTilt() {
   }
 }
 
-/* ---------- 4. Минималистичный тактический прицел / белая точка курсора ---------- */
+/* ---------- 4. Минималистичный курсор-точка с мягкими анимациями ---------- */
 function initTacticalCursor() {
   if (window.__tacticalCursorInit) return;
   window.__tacticalCursorInit = true;
   if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
 
-  // Удаляем старую ауру если была
   const oldAura = document.getElementById('ambient-aura');
   if (oldAura) oldAura.remove();
 
@@ -532,24 +619,13 @@ function initTacticalCursor() {
     document.body.appendChild(dot);
   }
 
-  const reticleSvg = `
-    <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
-      <circle cx="16" cy="16" r="10.5" fill="none" stroke="currentColor" stroke-width="1.2" />
-      <line x1="16" y1="1" x2="16" y2="4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-      <line x1="16" y1="28" x2="16" y2="31" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-      <line x1="1" y1="16" x2="4" y2="16" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-      <line x1="28" y1="16" x2="31" y2="16" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-    </svg>
-  `;
-
   if (!ring) {
     ring = document.createElement('div');
     ring.id = 'tactical-cursor-ring';
     ring.className = 'tactical-cursor-ring';
-    ring.innerHTML = reticleSvg;
     document.body.appendChild(ring);
-  } else if (!ring.querySelector('svg')) {
-    ring.innerHTML = reticleSvg;
+  } else {
+    ring.innerHTML = '';
   }
 
   let mouseX = -100;
@@ -583,7 +659,7 @@ function initTacticalCursor() {
   });
 
   document.addEventListener('mouseover', (e) => {
-    if (e.target.closest('a, button, input, select, textarea, .btn, [role="button"], label, .card, .settings-card, .dev-badge')) {
+    if (e.target.closest('a, button, input, select, textarea, .btn, [role="button"], label, .card, .settings-card, .dev-badge, .tab-btn, .dp-day, .dp-nav, .user-chip')) {
       document.body.classList.add('cursor-hover');
     } else {
       document.body.classList.remove('cursor-hover');

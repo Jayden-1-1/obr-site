@@ -2370,7 +2370,7 @@ a.btn.discord-nav-btn:hover {
    EXCLUSIVE YOUTH CYBER ANIMATIONS & REALISTIC FLUID WAVE PHYSICS
    ================================================================ */
 
-/* ---------- 1. Прозрачная волна оптического размытия (Pure Transparent Blur Wave) ---------- */
+/* ---------- 1. iOS Liquid Glass — переключение страниц с оптическим жидким стеклом ---------- */
 .page-wave-transition {
   position: fixed;
   inset: 0;
@@ -2379,93 +2379,120 @@ a.btn.discord-nav-btn:hover {
   z-index: 999999;
   pointer-events: none;
   overflow: hidden;
-  transform: translateX(100%);
+  transform: translate3d(100%, 0, 0);
   visibility: hidden;
+  will-change: transform;
 }
 
-.page-wave-blur-pane {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  backdrop-filter: blur(28px) saturate(120%);
-  -webkit-backdrop-filter: blur(28px) saturate(120%);
-  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.4) 40px, black 160px, black 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.4) 40px, black 160px, black 100%);
-}
-
-.page-wave-glass-edge {
+.page-liquid-glass-sheet {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 2px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.35) 25%,
-    rgba(255, 255, 255, 0.55) 50%,
-    rgba(255, 255, 255, 0.35) 75%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.25), -2px 0 8px rgba(255, 255, 255, 0.2);
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(34px) saturate(140%);
+  -webkit-backdrop-filter: blur(34px) saturate(140%);
+  border-top-left-radius: 40px;
+  border-bottom-left-radius: 40px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    -12px 0 36px -4px rgba(0, 0, 0, 0.45),
+    -1px 0 0 rgba(255, 255, 255, 0.6),
+    inset 2px 0 20px rgba(255, 255, 255, 0.08);
   pointer-events: none;
 }
 
-/* При переходе: плавно накрывает размытие справа налево без цвета */
+.liquid-glass-rim {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 48px;
+  border-top-left-radius: 40px;
+  border-bottom-left-radius: 40px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.05) 45%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.liquid-glass-specular {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 0;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 25%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(255, 255, 255, 0.4) 75%,
+    transparent 100%
+  );
+  box-shadow: 0 0 16px 2px rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+/* При переходе: плавно накрывает размытие жидким стеклом справа налево */
 body.page-leaving .page-wave-transition {
   visibility: visible;
-  animation: waveBlurCoverSmooth 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: liquidGlassCoverSmooth 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 body.page-leaving > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
-  filter: blur(6px);
-  opacity: 0.85;
+  filter: blur(8px) brightness(0.96);
+  opacity: 0.88;
   transition: filter 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease;
   pointer-events: none !important;
 }
 
-@keyframes waveBlurCoverSmooth {
+@keyframes liquidGlassCoverSmooth {
   0% {
-    transform: translateX(100%);
+    transform: translate3d(100%, 0, 0);
   }
   100% {
-    transform: translateX(0%);
+    transform: translate3d(0%, 0, 0);
   }
 }
 
 /* Когда загрузило: быстро снимаем размытие обратно вправо */
 body.page-entering .page-wave-transition {
   visibility: visible;
-  animation: waveBlurRetreatFast 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation: liquidGlassRetreatFast 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
 body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
   animation: pageBlurUncoverFast 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-@keyframes waveBlurRetreatFast {
+@keyframes liquidGlassRetreatFast {
   0% {
-    transform: translateX(0%);
+    transform: translate3d(0%, 0, 0);
   }
   100% {
-    transform: translateX(100%);
+    transform: translate3d(100%, 0, 0);
   }
 }
 
 @keyframes pageBlurUncoverFast {
   0% {
-    filter: blur(6px);
-    opacity: 0.85;
+    filter: blur(8px) brightness(0.96);
+    opacity: 0.88;
   }
   100% {
-    filter: blur(0px);
+    filter: blur(0px) brightness(1);
     opacity: 1;
   }
 }
 
-/* ---------- 2. Минималистичный тактический прицел / белая точка курсора ---------- */
+/* ---------- 2. Минималистичный курсор-точка с мягкими анимациями ---------- */
 @media (hover: hover) and (pointer: fine) {
   html, body, a, button, input, select, textarea, [role="button"], label {
     cursor: none !important;
@@ -2484,10 +2511,10 @@ body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(
   border-radius: 50%;
   pointer-events: none;
   z-index: 10000000;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 0 2px rgba(255, 255, 255, 1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
   transform: scale(1);
   transform-origin: center center;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
   will-change: left, top, transform;
 }
 
@@ -2495,51 +2522,44 @@ body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(
   position: fixed;
   top: 0;
   left: 0;
-  width: 32px;
-  height: 32px;
-  margin-left: -16px;
-  margin-top: -16px;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  margin-top: -13px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
   pointer-events: none;
   z-index: 9999999;
-  color: rgba(255, 255, 255, 0.45);
   transform: scale(1);
   transform-origin: center center;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease, opacity 0.2s ease;
+  box-sizing: border-box;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background 0.2s ease;
   will-change: left, top, transform;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.tactical-cursor-ring svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  shape-rendering: geometricPrecision;
-}
-
-/* Hover: идеально симметричное масштабирование вокруг центра */
+/* Hover: плавное расширение концентрической окружности */
 body.cursor-hover .tactical-cursor-ring {
-  transform: scale(1.32);
-  color: rgba(255, 255, 255, 0.95);
+  transform: scale(1.4);
+  border-color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 body.cursor-hover .tactical-cursor-dot {
-  transform: scale(1.2);
-  background: #ffffff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 1);
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 1);
 }
 
-/* Click / Active: идеально симметричное сжатие вокруг центра */
+/* Click / Active: симметричное пружинистое сжатие */
 body.cursor-active .tactical-cursor-ring {
-  transform: scale(0.82);
-  color: #5865f2;
+  transform: scale(0.85);
+  border-color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 body.cursor-active .tactical-cursor-dot {
-  transform: scale(0.75);
-  background: #5865f2;
-  box-shadow: 0 0 8px #5865f2;
+  transform: scale(0.8);
 }
 
 /* ---------- 3. 3D Magnetic Interactive Tilt & Specular Light ---------- */
@@ -2650,4 +2670,33 @@ body.cursor-active .tactical-cursor-dot {
   0% { transform: scale(0.88) translateY(20px); opacity: 0; }
   65% { transform: scale(1.02) translateY(-3px); opacity: 1; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* ---------- 7. Prompt Modal & Punishment Removal Info ---------- */
+.prompt-modal textarea.input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text, #f3f4f6);
+  padding: 10px 12px;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.prompt-modal textarea.input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+.punishment-remove-box {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 13px;
+  color: var(--text-dim, #9ca3af);
+  line-height: 1.4;
+}
+.punishment-remove-box b {
+  color: var(--text, #f3f4f6);
 }

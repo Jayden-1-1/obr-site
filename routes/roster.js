@@ -19,6 +19,7 @@ const {
   discordOnDismissal,
   discordOnWarning,
   discordOnVacation,
+  cleanExpiredPunishments,
 } = require('../services/rosterService');
 const discord = require('../discord');
 
@@ -29,6 +30,7 @@ router.get(
   requireAuth,
   api((req, res) => {
     ensureCommanderInRoster();
+    cleanExpiredPunishments();
     const now = todayISO();
     const expired = db
       .prepare("SELECT * FROM roster WHERE vacation_until != ''")
@@ -256,22 +258,35 @@ router.post(
     const entry = db.prepare('SELECT * FROM roster WHERE id = ?').get(req.params.id);
     if (!entry) return fail(res, 404, 'Запись не найдена');
     if (entry.warnings <= 0) return fail(res, 400, 'У сотрудника нет выговоров');
-    db.prepare('UPDATE roster SET warnings = warnings - 1 WHERE id = ?').run(entry.id);
-    db.prepare(
-      "UPDATE punishments SET status = 'removed', removed_at = datetime('now', 'localtime') WHERE id = (SELECT id FROM punishments WHERE roster_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1)"
-    ).run(entry.id);
+
+    const removeReason = String(req.body.reason || '').trim() || 'По решению руководства';
+    const removedBy = req.user.callsign || req.user.username || 'Руководство';
+
+    db.prepare('UPDATE roster SET warnings = MAX(warnings - 1, 0) WHERE id = ?').run(entry.id);
+
+    const activePun = db.prepare(
+      "SELECT id, reason FROM punishments WHERE roster_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1"
+    ).get(entry.id);
+
+    if (activePun) {
+      db.prepare(
+        `UPDATE punishments 
+         SET status = 'removed', 
+             removed_at = datetime('now', 'localtime'), 
+             remove_reason = ?, 
+             removed_by = ? 
+         WHERE id = ?`
+      ).run(removeReason, removedBy, activePun.id);
+    }
 
     const updatedEntry = db.prepare('SELECT * FROM roster WHERE id = ?').get(entry.id);
     syncMemberDiscordRoles(entry.user_id, updatedEntry);
 
-    const removedPun = db.prepare(
-      "SELECT reason FROM punishments WHERE roster_id = ? AND status = 'removed' ORDER BY removed_at DESC, id DESC LIMIT 1"
-    ).get(entry.id);
     discordOnWarning(
       entry.user_id,
       entry.callsign,
       'Выговор снят',
-      `**Причина:** ${removedPun ? removedPun.reason : '—'}`
+      `**Причина снятия:** ${removeReason}\n**Снял:** ${removedBy}\n**За что выносился:** ${activePun ? activePun.reason : '—'}`
     );
 
     res.json({ roster: updatedEntry });

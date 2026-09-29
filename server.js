@@ -22,6 +22,7 @@ const {
   toISODate,
   todayISO,
   syncMemberDiscordRoles,
+  cleanExpiredPunishments,
 } = require('./services/rosterService');
 
 // Routers
@@ -169,6 +170,18 @@ try {
 } catch (e) {
   console.error('[VACATION] Ошибка очистки истёкших отпусков:', e);
 }
+
+// Maintenance: clean expired punishments on startup & interval
+try {
+  cleanExpiredPunishments();
+} catch (e) {
+  console.error('[PUNISHMENTS] Ошибка очистки истёкших выговоров:', e);
+}
+setInterval(() => {
+  try {
+    cleanExpiredPunishments();
+  } catch (e) {}
+}, 5 * 60 * 1000);
 
 // Start Server
 if (require.main === module) {

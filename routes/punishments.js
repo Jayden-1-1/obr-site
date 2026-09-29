@@ -7,7 +7,11 @@ const {
   requireStaff,
   requireManager,
 } = require('../middleware/auth');
-const { discordOnWarning } = require('../services/rosterService');
+const {
+  discordOnWarning,
+  cleanExpiredPunishments,
+  syncMemberDiscordRoles,
+} = require('../services/rosterService');
 
 const router = express.Router();
 
@@ -16,6 +20,7 @@ router.get(
   requireAuth,
   requireStaff,
   api((req, res) => {
+    cleanExpiredPunishments();
     const punishments = db
       .prepare('SELECT * FROM punishments ORDER BY id DESC')
       .all();
@@ -30,13 +35,30 @@ router.post(
   api((req, res) => {
     const p = db.prepare('SELECT * FROM punishments WHERE id = ?').get(req.params.id);
     if (!p) return fail(res, 404, 'Наказание не найдено');
+
     if (p.status !== 'removed') {
+      const removeReason = String(req.body.reason || '').trim() || 'По решению руководства';
+      const removedBy = req.user.callsign || req.user.username || 'Руководство';
+
       db.prepare(
-        "UPDATE punishments SET status = 'removed', removed_at = datetime('now', 'localtime') WHERE id = ?"
-      ).run(p.id);
+        `UPDATE punishments 
+         SET status = 'removed', 
+             removed_at = datetime('now', 'localtime'), 
+             remove_reason = ?, 
+             removed_by = ? 
+         WHERE id = ?`
+      ).run(removeReason, removedBy, p.id);
+
       db.prepare('UPDATE roster SET warnings = MAX(warnings - 1, 0) WHERE id = ?').run(p.roster_id);
-      const entry = db.prepare('SELECT user_id FROM roster WHERE id = ?').get(p.roster_id);
-      discordOnWarning(entry ? entry.user_id : null, p.callsign, 'Выговор снят', `**Причина:** ${p.reason}`);
+      const entry = db.prepare('SELECT * FROM roster WHERE id = ?').get(p.roster_id);
+      if (entry) syncMemberDiscordRoles(entry.user_id, entry);
+
+      discordOnWarning(
+        entry ? entry.user_id : null,
+        p.callsign,
+        'Выговор снят',
+        `**Причина снятия:** ${removeReason}\n**Снял:** ${removedBy}\n**За что выносился:** ${p.reason || '—'}`
+      );
     }
     res.json({ punishment: db.prepare('SELECT * FROM punishments WHERE id = ?').get(p.id) });
   })
