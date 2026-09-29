@@ -300,7 +300,7 @@ async function initHeader(active) {
   initPageTransitions();
   initButtonPhysics();
   init3DTilt();
-  initCyberCursorAura();
+  initTacticalCursor();
   initBorderBeams();
   initCounterRoll();
 }
@@ -468,7 +468,7 @@ function initPageTransitions() {
   setTimeout(() => {
     document.body.classList.remove('page-entering');
     document.body.classList.add('page-settled');
-  }, 480);
+  }, 650);
 
   // Сброс при возврате через историю браузера (bfcache)
   window.addEventListener('pageshow', () => {
@@ -566,7 +566,8 @@ function init3DTilt() {
   if (window.__tiltInit) return;
   window.__tiltInit = true;
 
-  const selector = '.card, .settings-card, .stat-card, .doc-item, .panel, .dev-badge';
+  // Исключаем dev-badge, оставляем карточки и панели
+  const selector = '.card, .settings-card, .stat-card, .doc-item, .panel';
 
   const setupElement = (el) => {
     if (el.dataset.tiltReady) return;
@@ -601,51 +602,80 @@ function init3DTilt() {
   }
 }
 
-/* ---------- 4. Кибернетическая плавная аура курсора (Ambient Cursor Aura) ---------- */
-function initCyberCursorAura() {
-  if (window.__cursorAuraInit) return;
-  window.__cursorAuraInit = true;
+/* ---------- 4. Минималистичный тактический прицел / белая точка курсора ---------- */
+function initTacticalCursor() {
+  if (window.__tacticalCursorInit) return;
+  window.__tacticalCursorInit = true;
   if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
 
-  let aura = document.getElementById('ambient-aura');
-  if (!aura) {
-    aura = document.createElement('div');
-    aura.id = 'ambient-aura';
-    aura.className = 'ambient-cursor-aura';
-    document.body.appendChild(aura);
+  // Удаляем старую ауру если была
+  const oldAura = document.getElementById('ambient-aura');
+  if (oldAura) oldAura.remove();
+
+  let dot = document.getElementById('tactical-cursor-dot');
+  let ring = document.getElementById('tactical-cursor-ring');
+
+  if (!dot) {
+    dot = document.createElement('div');
+    dot.id = 'tactical-cursor-dot';
+    dot.className = 'tactical-cursor-dot';
+    document.body.appendChild(dot);
+  }
+  if (!ring) {
+    ring = document.createElement('div');
+    ring.id = 'tactical-cursor-ring';
+    ring.className = 'tactical-cursor-ring';
+    document.body.appendChild(ring);
   }
 
   let mouseX = window.innerWidth / 2;
   let mouseY = window.innerHeight / 2;
-  let currentX = mouseX;
-  let currentY = mouseY;
+  let ringX = mouseX;
+  let ringY = mouseY;
   let isMoving = false;
 
   window.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
+    dot.style.left = `${mouseX}px`;
+    dot.style.top = `${mouseY}px`;
+    dot.style.opacity = '1';
+    ring.style.opacity = '1';
     if (!isMoving) {
       isMoving = true;
       loop();
     }
   });
 
+  document.addEventListener('mouseleave', () => {
+    dot.style.opacity = '0';
+    ring.style.opacity = '0';
+  });
+
   document.addEventListener('mouseover', (e) => {
-    if (e.target.closest('.btn, a, input, select, textarea, .card, .settings-card')) {
-      aura.classList.add('active-hover');
+    if (e.target.closest('a, button, input, select, textarea, .btn, [role="button"], label, .card, .settings-card, .dev-badge')) {
+      document.body.classList.add('cursor-hover');
     } else {
-      aura.classList.remove('active-hover');
+      document.body.classList.remove('cursor-hover');
     }
   });
 
+  document.addEventListener('mousedown', () => {
+    document.body.classList.add('cursor-active');
+  });
+
+  document.addEventListener('mouseup', () => {
+    document.body.classList.remove('cursor-active');
+  });
+
   function loop() {
-    currentX += (mouseX - currentX) * 0.12;
-    currentY += (mouseY - currentY) * 0.12;
+    ringX += (mouseX - ringX) * 0.22;
+    ringY += (mouseY - ringY) * 0.22;
 
-    aura.style.left = `${currentX}px`;
-    aura.style.top = `${currentY}px`;
+    ring.style.left = `${ringX}px`;
+    ring.style.top = `${ringY}px`;
 
-    if (Math.abs(mouseX - currentX) > 0.1 || Math.abs(mouseY - currentY) > 0.1) {
+    if (Math.abs(mouseX - ringX) > 0.1 || Math.abs(mouseY - ringY) > 0.1) {
       requestAnimationFrame(loop);
     } else {
       isMoving = false;
@@ -655,7 +685,11 @@ function initCyberCursorAura() {
 
 /* ---------- 5. Неоновый бегущий лазер по граням (Border Beam Runner) ---------- */
 function initBorderBeams() {
-  const targets = document.querySelectorAll('.discord-linked-glow, #dev-badge, #news-card');
+  // Убираем обводку у бейджа разработчика (вернуть обратно оригинальный вид)
+  const devBadgeBeam = document.querySelector('#dev-badge .border-beam');
+  if (devBadgeBeam) devBadgeBeam.remove();
+
+  const targets = document.querySelectorAll('.discord-linked-glow, #news-card');
   targets.forEach((el) => {
     if (el.querySelector('.border-beam')) return;
     const beam = document.createElement('div');
@@ -700,7 +734,7 @@ if (document.readyState === 'loading') {
     initPageTransitions();
     initButtonPhysics();
     init3DTilt();
-    initCyberCursorAura();
+    initTacticalCursor();
     initBorderBeams();
     initCounterRoll();
   });
@@ -708,7 +742,7 @@ if (document.readyState === 'loading') {
   initPageTransitions();
   initButtonPhysics();
   init3DTilt();
-  initCyberCursorAura();
+  initTacticalCursor();
   initBorderBeams();
   initCounterRoll();
 }
