@@ -436,6 +436,16 @@ async function initNewsTicker() {
   }
 }
 
+const __prefetchedUrls = new Set();
+function prefetchUrl(url) {
+  if (__prefetchedUrls.has(url)) return;
+  __prefetchedUrls.add(url);
+  const link = document.createElement('link');
+  link.rel = 'prefetch';
+  link.href = url;
+  document.head.appendChild(link);
+}
+
 function ensureWaveTransitionEl() {
   let el = document.getElementById('page-wave-transition');
   if (!el) {
@@ -444,9 +454,12 @@ function ensureWaveTransitionEl() {
     el.className = 'page-wave-transition';
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML = `
+      <div class="liquid-glass-lead-wave"></div>
       <div class="page-liquid-glass-sheet">
+        <div class="liquid-glass-ambient-beam"></div>
         <div class="liquid-glass-rim"></div>
         <div class="liquid-glass-specular"></div>
+        <div class="liquid-glass-glint"></div>
       </div>
     `;
     document.body.appendChild(el);
@@ -460,22 +473,42 @@ function initPageTransitions() {
 
   ensureWaveTransitionEl();
 
-  // Быстро снимаем размытие обратно вправо при загрузке
+  // Быстро и плавно снимаем размытие жидкого стекла обратно вправо при загрузке
   document.body.classList.remove('page-leaving');
   document.body.classList.add('page-entering');
 
   setTimeout(() => {
     document.body.classList.remove('page-entering');
     document.body.classList.add('page-settled');
-  }, 280);
+  }, 320);
 
   // Сброс при возврате через историю браузера (bfcache)
   window.addEventListener('pageshow', () => {
     document.body.classList.remove('page-leaving');
-    document.body.classList.add('page-settled');
+    document.body.classList.add('page-entering');
+    setTimeout(() => {
+      document.body.classList.remove('page-entering');
+      document.body.classList.add('page-settled');
+    }, 320);
   });
 
-  // Перехват кликов по внутренним ссылкам: плавно накрываем экран размытием справа налево
+  // Умный префетч при наведении на ссылки для моментальной подгрузки без задержек
+  document.addEventListener('mouseover', (e) => {
+    const link = e.target.closest('a');
+    if (!link || !link.href) return;
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:')) return;
+    try {
+      const url = new URL(href, window.location.origin);
+      if (url.origin === window.location.origin && !url.pathname.startsWith('/api/')) {
+        prefetchUrl(url.href);
+      }
+    } catch (_) {}
+  });
+
+  let isNavigating = false;
+
+  // Перехват кликов по внутренним ссылкам: плавно накрываем экран жидким стеклом с физикой Apple
   document.addEventListener('click', (e) => {
     const link = e.target.closest('a');
     if (!link) return;
@@ -511,14 +544,17 @@ function initPageTransitions() {
       return;
     }
 
-    // Плавно накрываем прозрачное размытие справа налево
+    if (isNavigating) return;
+    isNavigating = true;
+
+    // Плавно накрываем экран жидким стеклом с параллаксом страницы
     e.preventDefault();
     document.body.classList.remove('page-entering', 'page-settled');
     document.body.classList.add('page-leaving');
 
     setTimeout(() => {
       window.location.href = targetUrl.href;
-    }, 380);
+    }, 400);
   });
 }
 
