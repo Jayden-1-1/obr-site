@@ -407,17 +407,19 @@ a:hover { color: var(--accent); }
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding-bottom: 8px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  font-size: 12px;
+  background: rgba(10, 12, 16, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.5px;
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
 .profile-av-wrap:hover .profile-av-overlay { opacity: 1; }
@@ -486,6 +488,179 @@ a:hover { color: var(--accent); }
 
 #news-card .border-beam {
   display: none !important;
+}
+
+/* ==========================================================================
+   ЕДИНОЕ МИНИМАЛИСТИЧНОЕ ОФОРМЛЕНИЕ КНОПОК В НАСТРОЙКАХ (Управление аккаунтом)
+   Сдержанный дизайн, выверенная геометрия, отсутствие вырвиглазного неона
+   ========================================================================== */
+
+.settings-card .form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 4px;
+}
+
+.settings-card .btn,
+.settings-card .form-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: 
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.settings-card .btn:hover,
+.settings-card .form-actions .btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.settings-card .btn:active,
+.settings-card .form-actions .btn:active {
+  transform: scale(0.975);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Первичная кнопка (Primary) — чистый контраст */
+.settings-card .btn.primary,
+.settings-card .form-actions .btn.primary {
+  background: #ffffff !important;
+  background-image: none !important;
+  border-color: #ffffff !important;
+  color: #0b0c10 !important;
+  font-weight: 650;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.settings-card .btn.primary:hover,
+.settings-card .form-actions .btn.primary:hover {
+  background: #e6e8ed !important;
+  border-color: #e6e8ed !important;
+  color: #000000 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.settings-card .btn.primary:active,
+.settings-card .form-actions .btn.primary:active {
+  transform: scale(0.975) !important;
+  background: #d4d7e0 !important;
+}
+
+/* Опасные действия (Danger) — матовый рубиновый оттенок */
+.settings-card .btn.danger,
+.settings-card .form-actions .btn.danger {
+  background: rgba(239, 68, 68, 0.08) !important;
+  background-image: none !important;
+  border-color: rgba(239, 68, 68, 0.24) !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.settings-card .btn.danger:hover,
+.settings-card .form-actions .btn.danger:hover {
+  background: rgba(239, 68, 68, 0.18) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.22) !important;
+}
+
+.settings-card .btn.danger:active,
+.settings-card .form-actions .btn.danger:active {
+  transform: scale(0.975) !important;
+}
+
+/* Discord в настройках — сдержанный blurple без тяжелого сплошного градиента */
+.settings-card .btn.discord,
+.settings-card .btn.relink-btn,
+.settings-card .form-actions .btn.discord,
+.settings-card .form-actions .btn.relink-btn {
+  background: rgba(88, 101, 242, 0.14) !important;
+  background-image: none !important;
+  border-color: rgba(88, 101, 242, 0.35) !important;
+  color: #e2e5ff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.settings-card .btn.discord:hover,
+.settings-card .btn.relink-btn:hover,
+.settings-card .form-actions .btn.discord:hover,
+.settings-card .form-actions .btn.relink-btn:hover {
+  background: rgba(88, 101, 242, 0.24) !important;
+  background-image: none !important;
+  border-color: rgba(88, 101, 242, 0.6) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 18px rgba(88, 101, 242, 0.3) !important;
+}
+
+.settings-card .btn.discord:active,
+.settings-card .btn.relink-btn:active,
+.settings-card .form-actions .btn.discord:active,
+.settings-card .form-actions .btn.relink-btn:active {
+  transform: scale(0.975) !important;
+}
+
+.settings-card .btn.discord::before,
+.settings-card .btn.relink-btn::before,
+.settings-card .form-actions .btn.discord::before {
+  display: none !important;
+}
+
+.settings-card .btn.discord svg,
+.settings-card .btn.relink-btn svg {
+  fill: currentColor !important;
+  color: currentColor !important;
+}
+
+/* Кнопка отзыва конкретной сессии в таблице устройств */
+.sessions-list .btn.small.danger {
+  height: 30px;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: 7px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sessions-list .btn.small.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 /* ---------- Автор рапорта ---------- */
@@ -1508,8 +1683,8 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
 }
 
 .dev-badge.active {
-  transform: translateY(-50%) translateX(2px);
-  opacity: 0.35;
+  transform: translateY(-50%) translateX(105%);
+  opacity: 0;
   pointer-events: none;
 }
 
@@ -1545,33 +1720,33 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   position: fixed;
   right: 0;
   top: 50%;
-  transform: translateY(-50%) translate3d(105%, 0, 0);
+  transform: translateY(-50%) translate3d(108%, 0, 0);
   z-index: 9999;
   width: 310px;
   max-width: calc(100vw - 20px);
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.07) 0%,
     rgba(255, 255, 255, 0.02) 60%,
-    rgba(10, 14, 20, 0.55) 100%
+    rgba(10, 14, 20, 0.58) 100%
   );
-  backdrop-filter: blur(44px) saturate(190%) contrast(102%) brightness(1.03);
-  -webkit-backdrop-filter: blur(44px) saturate(190%) contrast(102%) brightness(1.03);
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(48px) saturate(190%) contrast(104%);
+  -webkit-backdrop-filter: blur(48px) saturate(190%) contrast(104%);
+  border: 1.5px solid rgba(255, 255, 255, 0.26);
   border-right: none;
   border-radius: 24px 0 0 24px;
   padding: 24px 22px 24px 26px;
   box-shadow: 
-    -24px 0 70px rgba(0, 0, 0, 0.7),
+    -24px 0 70px rgba(0, 0, 0, 0.75),
     -6px 0 24px rgba(0, 0, 0, 0.45),
     inset 2px 0 24px rgba(255, 255, 255, 0.1);
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
   transition: 
-    transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0.42s;
+    visibility 0.45s;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -1587,19 +1762,36 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
 .dev-panel-specular {
   position: absolute;
   left: 0;
-  top: 10%;
-  bottom: 10%;
+  top: 5%;
+  bottom: 5%;
   width: 2px;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.3) 15%,
+    rgba(255, 255, 255, 0.25) 15%,
     rgba(255, 255, 255, 0.95) 50%,
-    rgba(255, 255, 255, 0.3) 85%,
+    rgba(255, 255, 255, 0.25) 85%,
     transparent 100%
   );
-  box-shadow: 0 0 16px 2px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 16px 2px rgba(255, 255, 255, 0.55);
   pointer-events: none;
+  opacity: 0.8;
+}
+
+.dev-panel.open .dev-panel-specular {
+  animation: devSpecularSweep 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes devSpecularSweep {
+  0% {
+    transform: translateY(-8%);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(8%);
+    opacity: 1;
+    filter: drop-shadow(0 0 6px #ffffff);
+  }
 }
 
 .dev-panel-close {
@@ -1618,14 +1810,55 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .dev-panel-close:hover {
   background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.35);
-  transform: scale(1.08);
+  transform: rotate(90deg) scale(1.12);
+}
+
+.dev-panel-close:active {
+  transform: rotate(90deg) scale(0.92);
+}
+
+/* Каскадное появление внутренних элементов панельки */
+.dev-panel-head,
+.dev-panel-body,
+.dev-panel-card,
+.dev-panel-shop {
+  opacity: 0;
+  transform: translateX(18px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dev-panel.open .dev-panel-head {
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.08s;
+}
+
+.dev-panel.open .dev-panel-body {
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.15s;
+}
+
+.dev-panel.open .dev-panel-card {
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.22s;
+}
+
+.dev-panel.open .dev-panel-shop {
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.29s;
+}
+
+@keyframes devPanelItemCascade {
+  0% {
+    opacity: 0;
+    transform: translateX(18px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
 .dev-panel-head {
@@ -1647,6 +1880,12 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   color: #ffffff;
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.dev-panel:hover .dev-panel-logo {
+  transform: rotate(-3deg) scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
 .dev-panel-brand {
@@ -1713,20 +1952,49 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   border: 1px solid rgba(88, 101, 242, 0.32);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
+  position: relative;
+  overflow: hidden;
 }
 
 .dev-discord-chip:hover {
-  background: rgba(88, 101, 242, 0.22);
-  border-color: rgba(88, 101, 242, 0.6);
-  transform: translateY(-1px);
+  background: rgba(88, 101, 242, 0.2);
+  border-color: rgba(88, 101, 242, 0.55);
+  transform: translateY(-1.5px);
   box-shadow: 0 4px 16px rgba(88, 101, 242, 0.25);
+}
+
+.dev-discord-chip:active {
+  transform: scale(0.975);
+}
+
+.dev-discord-chip.copied {
+  background: rgba(16, 185, 129, 0.16) !important;
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.3) !important;
+  animation: devChipCopyPulse 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dev-discord-chip.copied .dev-discord-copy {
+  color: #34d399 !important;
+  font-weight: 700;
+}
+
+.dev-discord-chip.copied .dev-discord-icon {
+  color: #34d399 !important;
+}
+
+@keyframes devChipCopyPulse {
+  0% { transform: scale(0.95); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
 }
 
 .dev-discord-icon {
   color: #7289da;
   flex-shrink: 0;
+  transition: color 0.2s ease;
 }
 
 .dev-discord-name {
@@ -1742,6 +2010,7 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.2s ease;
 }
 
 .dev-discord-chip:hover .dev-discord-copy {
@@ -1755,21 +2024,34 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   gap: 8px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  transition: all 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.dev-panel-link svg {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .dev-panel-link:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 22px rgba(255, 255, 255, 0.14);
+  transform: translateY(-1.5px);
+}
+
+.dev-panel-link:hover svg {
+  transform: scale(1.15) rotate(6deg);
+}
+
+.dev-panel-link:active {
+  transform: scale(0.975);
 }
 
 

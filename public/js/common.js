@@ -827,17 +827,43 @@ function toggleDevPanel(force) {
   if (!p) return;
   const isOpen = typeof force === 'boolean' ? force : !p.classList.contains('open');
   p.classList.toggle('open', isOpen);
-  if (b) b.classList.toggle('active', isOpen);
+  p.setAttribute('aria-hidden', (!isOpen).toString());
+  if (b) {
+    b.classList.toggle('active', isOpen);
+    b.setAttribute('aria-expanded', isOpen.toString());
+  }
 }
 
 function copyDiscordUser(tag) {
+  const chip = document.querySelector('.dev-discord-chip');
+  const copyLabel = chip ? chip.querySelector('.dev-discord-copy') : null;
+  const originalText = copyLabel ? (copyLabel.getAttribute('data-original') || copyLabel.textContent) : 'скопировать';
+  if (copyLabel && !copyLabel.getAttribute('data-original')) {
+    copyLabel.setAttribute('data-original', originalText);
+  }
+
+  const triggerFeedback = () => {
+    if (chip && copyLabel) {
+      chip.classList.add('copied');
+      copyLabel.textContent = 'Скопировано! ✓';
+      clearTimeout(chip._copyTimeout);
+      chip._copyTimeout = setTimeout(() => {
+        chip.classList.remove('copied');
+        copyLabel.textContent = originalText;
+      }, 1800);
+    }
+  };
+
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(tag).then(() => {
+      triggerFeedback();
       showToast('ok', `Discord скопирован: ${tag}`);
     }).catch(() => {
+      triggerFeedback();
       showToast('info', `Discord: ${tag}`);
     });
   } else {
+    triggerFeedback();
     showToast('info', `Discord: ${tag}`);
   }
 }
