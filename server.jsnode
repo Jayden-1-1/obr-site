@@ -1,0 +1,2 @@
+// Safety fallback for Render start command formatting
+require('./start.js');
