@@ -357,101 +357,13 @@ function ensureWaveTransitionEl() {
     el.className = 'page-wave-transition';
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML = `
-      <canvas id="wave-spray-canvas" class="wave-spray-canvas"></canvas>
-      <div class="page-wave-body">
-        <svg class="wave-fluid-svg" viewBox="0 0 260 1000" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="waveCrestGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#00f5d4" stop-opacity="1" />
-              <stop offset="50%" stop-color="#5865f2" stop-opacity="1" />
-              <stop offset="100%" stop-color="#7928ca" stop-opacity="1" />
-            </linearGradient>
-          </defs>
-          <path class="wave-swell" d="M260,0 C140,160 210,360 110,540 C30,720 170,860 260,1000 L260,0 Z"></path>
-          <path class="wave-subcrest" d="M260,0 C170,130 90,290 160,470 C220,650 85,820 260,1000 L260,0 Z"></path>
-          <path class="wave-crest" d="M260,0 C100,150 230,330 50,500 C-15,640 185,810 260,1000 L260,0 Z"></path>
-          <path class="wave-caustic" d="M260,0 C100,150 230,330 50,500 C-15,640 185,810 260,1000" fill="none" stroke="url(#waveCrestGlow)" stroke-width="6"></path>
-        </svg>
-        <div class="wave-caustic-light"></div>
+      <div class="page-wave-blur-pane">
+        <div class="page-wave-glass-edge"></div>
       </div>
     `;
     document.body.appendChild(el);
   }
   return el;
-}
-
-let __waveCanvasRaf = null;
-
-function triggerWaveFluidSpray(direction = 'leave') {
-  const canvas = document.getElementById('wave-spray-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  const w = (canvas.width = window.innerWidth);
-  const h = (canvas.height = window.innerHeight);
-
-  if (__waveCanvasRaf) cancelAnimationFrame(__waveCanvasRaf);
-
-  const colors = ['#00f5d4', '#5865f2', '#57f287', '#38bdf8', '#c084fc'];
-  const particles = [];
-  const count = 48;
-  const startX = direction === 'leave' ? w * 0.85 : w * 0.25;
-
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      x: startX + (Math.random() - 0.5) * 120,
-      y: Math.random() * h,
-      vx: -(Math.random() * 12 + 6),
-      vy: (Math.random() - 0.5) * 5,
-      size: Math.random() * 3.5 + 1.5,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      alpha: Math.random() * 0.5 + 0.5,
-      decay: Math.random() * 0.02 + 0.02,
-      wobble: Math.random() * Math.PI * 2,
-    });
-  }
-
-  const start = performance.now();
-  const maxDur = 450;
-
-  function render(time) {
-    const elapsed = time - start;
-    if (elapsed > maxDur || particles.length === 0) {
-      ctx.clearRect(0, 0, w, h);
-      return;
-    }
-
-    ctx.clearRect(0, 0, w, h);
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx;
-      p.wobble += 0.12;
-      p.y += p.vy + Math.sin(p.wobble) * 1.5;
-      p.vx *= 0.96;
-      p.alpha -= p.decay;
-
-      if (p.alpha <= 0 || p.x < -50) {
-        particles.splice(i, 1);
-        continue;
-      }
-
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, p.alpha);
-      ctx.fillStyle = p.color;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = p.size * 3;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    __waveCanvasRaf = requestAnimationFrame(render);
-  }
-
-  __waveCanvasRaf = requestAnimationFrame(render);
 }
 
 function initPageTransitions() {
@@ -460,15 +372,14 @@ function initPageTransitions() {
 
   ensureWaveTransitionEl();
 
-  // Плавный вход на страницу с физикой и рассеиванием волны влево
+  // Плавный вход на страницу: волна прозрачного размытия сходит влево и растворяется
   document.body.classList.remove('page-leaving');
   document.body.classList.add('page-entering');
-  triggerWaveFluidSpray('enter');
 
   setTimeout(() => {
     document.body.classList.remove('page-entering');
     document.body.classList.add('page-settled');
-  }, 650);
+  }, 520);
 
   // Сброс при возврате через историю браузера (bfcache)
   window.addEventListener('pageshow', () => {
@@ -512,15 +423,14 @@ function initPageTransitions() {
       return;
     }
 
-    // Запуск физической волны справа налево с размытием
+    // Запуск прозрачной волны размытия справа налево
     e.preventDefault();
     document.body.classList.remove('page-entering', 'page-settled');
     document.body.classList.add('page-leaving');
-    triggerWaveFluidSpray('leave');
 
     setTimeout(() => {
       window.location.href = targetUrl.href;
-    }, 380);
+    }, 360);
   });
 }
 
@@ -621,22 +531,42 @@ function initTacticalCursor() {
     dot.className = 'tactical-cursor-dot';
     document.body.appendChild(dot);
   }
+
+  const reticleSvg = `
+    <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+      <circle cx="16" cy="16" r="10.5" fill="none" stroke="currentColor" stroke-width="1.2" />
+      <line x1="16" y1="1" x2="16" y2="4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+      <line x1="16" y1="28" x2="16" y2="31" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+      <line x1="1" y1="16" x2="4" y2="16" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+      <line x1="28" y1="16" x2="31" y2="16" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+    </svg>
+  `;
+
   if (!ring) {
     ring = document.createElement('div');
     ring.id = 'tactical-cursor-ring';
     ring.className = 'tactical-cursor-ring';
+    ring.innerHTML = reticleSvg;
     document.body.appendChild(ring);
+  } else if (!ring.querySelector('svg')) {
+    ring.innerHTML = reticleSvg;
   }
 
-  let mouseX = window.innerWidth / 2;
-  let mouseY = window.innerHeight / 2;
-  let ringX = mouseX;
-  let ringY = mouseY;
+  let mouseX = -100;
+  let mouseY = -100;
+  let ringX = -100;
+  let ringY = -100;
   let isMoving = false;
+  let hasMoved = false;
 
   window.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
+    if (!hasMoved) {
+      hasMoved = true;
+      ringX = mouseX;
+      ringY = mouseY;
+    }
     dot.style.left = `${mouseX}px`;
     dot.style.top = `${mouseY}px`;
     dot.style.opacity = '1';
@@ -669,15 +599,17 @@ function initTacticalCursor() {
   });
 
   function loop() {
-    ringX += (mouseX - ringX) * 0.22;
-    ringY += (mouseY - ringY) * 0.22;
+    ringX += (mouseX - ringX) * 0.24;
+    ringY += (mouseY - ringY) * 0.24;
 
-    ring.style.left = `${ringX}px`;
-    ring.style.top = `${ringY}px`;
+    ring.style.left = `${ringX.toFixed(2)}px`;
+    ring.style.top = `${ringY.toFixed(2)}px`;
 
-    if (Math.abs(mouseX - ringX) > 0.1 || Math.abs(mouseY - ringY) > 0.1) {
+    if (Math.abs(mouseX - ringX) > 0.05 || Math.abs(mouseY - ringY) > 0.05) {
       requestAnimationFrame(loop);
     } else {
+      ring.style.left = `${mouseX}px`;
+      ring.style.top = `${mouseY}px`;
       isMoving = false;
     }
   }

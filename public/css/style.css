@@ -2344,160 +2344,104 @@ a.btn.discord-nav-btn:hover {
    EXCLUSIVE YOUTH CYBER ANIMATIONS & REALISTIC FLUID WAVE PHYSICS
    ================================================================ */
 
-/* ---------- 1. Realistic Fluid Shockwave Transition ---------- */
+/* ---------- 1. Прозрачная волна оптического размытия (Pure Transparent Blur Wave) ---------- */
 .page-wave-transition {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 999999;
   pointer-events: none;
-  overflow: visible;
+  overflow: hidden;
   transform: translateX(100%);
-  display: flex;
   visibility: hidden;
 }
 
-.wave-spray-canvas {
+.page-wave-blur-pane {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
-  z-index: 4;
+  background: transparent;
+  backdrop-filter: blur(28px) saturate(120%);
+  -webkit-backdrop-filter: blur(28px) saturate(120%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.4) 40px, black 160px, black 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.4) 40px, black 160px, black 100%);
 }
 
-.page-wave-body {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(270deg, rgba(8, 10, 16, 0.98) 0%, rgba(14, 18, 28, 0.92) 55%, rgba(88, 101, 242, 0.28) 100%);
-  backdrop-filter: blur(28px) saturate(160%) contrast(1.15);
-  -webkit-backdrop-filter: blur(28px) saturate(160%) contrast(1.15);
-  overflow: visible;
-}
-
-.wave-fluid-svg {
+.page-wave-glass-edge {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: -238px;
-  width: 240px;
-  height: 100%;
+  left: 0;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.35) 25%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.35) 75%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.25), -2px 0 8px rgba(255, 255, 255, 0.2);
   pointer-events: none;
-  overflow: visible;
-  filter: drop-shadow(-8px 0 25px rgba(88, 101, 242, 0.7)) drop-shadow(-20px 0 45px rgba(0, 245, 212, 0.45));
 }
 
-.wave-swell {
-  fill: rgba(14, 18, 28, 0.85);
-  animation: waveUndulateSwell 4s ease-in-out infinite alternate;
-}
-
-.wave-subcrest {
-  fill: rgba(88, 101, 242, 0.4);
-  animation: waveUndulateSub 3.2s ease-in-out infinite alternate;
-}
-
-.wave-crest {
-  fill: rgba(12, 15, 24, 0.98);
-  animation: waveUndulateMain 2.6s ease-in-out infinite alternate;
-}
-
-.wave-caustic {
-  filter: drop-shadow(0 0 12px #00f5d4) drop-shadow(0 0 24px #5865f2);
-  animation: waveCausticPulse 2s ease-in-out infinite alternate;
-}
-
-.wave-caustic-light {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -10px;
-  width: 14px;
-  background: linear-gradient(180deg, #00f5d4, #5865f2 50%, #7928ca);
-  box-shadow: 0 0 45px 12px rgba(0, 245, 212, 0.8), -10px 0 60px 18px rgba(88, 101, 242, 0.75), 0 0 90px 30px rgba(121, 40, 202, 0.5);
-  filter: blur(1px);
-}
-
-@keyframes waveUndulateMain {
-  0% { transform: scaleX(0.96) translateY(0); }
-  50% { transform: scaleX(1.08) translateY(-15px); }
-  100% { transform: scaleX(1) translateY(10px); }
-}
-
-@keyframes waveUndulateSub {
-  0% { transform: scaleX(1.05) translateY(12px); }
-  50% { transform: scaleX(0.94) translateY(-10px); }
-  100% { transform: scaleX(1.1) translateY(6px); }
-}
-
-@keyframes waveUndulateSwell {
-  0% { transform: scaleX(0.92) translateY(-18px); }
-  100% { transform: scaleX(1.06) translateY(18px); }
-}
-
-@keyframes waveCausticPulse {
-  0%, 100% { opacity: 0.85; stroke-width: 5; }
-  50% { opacity: 1; stroke-width: 8; }
-}
-
-/* При уходе со страницы: волна с физикой сносит контент справа налево */
+/* При уходе со страницы: прозрачная волна размытия накатывает справа налево */
 body.page-leaving .page-wave-transition {
   visibility: visible;
-  animation: wavePhysicalSweepLeave 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: waveBlurSweepLeave 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 body.page-leaving > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
-  transform: perspective(1200px) scale(0.978) translateX(-24px) rotateY(-1deg);
-  filter: blur(14px) contrast(1.15) brightness(0.85);
-  opacity: 0.7;
-  transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), filter 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease;
+  filter: blur(8px);
+  opacity: 0.82;
+  transition: filter 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.34s ease;
   pointer-events: none !important;
 }
 
-@keyframes wavePhysicalSweepLeave {
-  0% { transform: translateX(100%); opacity: 1; }
-  100% { transform: translateX(0%); opacity: 1; }
+@keyframes waveBlurSweepLeave {
+  0% {
+    transform: translateX(100%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0%);
+    opacity: 1;
+  }
 }
 
-/* При входе на страницу: волна плавно исчезает и растворяется влево */
+/* При входе на страницу: прозрачная волна размытия плавно сходит влево и растворяется */
 body.page-entering .page-wave-transition {
   visibility: visible;
-  animation: wavePhysicalDissolveEnter 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: waveBlurDissolveEnter 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
-  animation: pageSpringRestore 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageBlurRestore 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes wavePhysicalDissolveEnter {
+@keyframes waveBlurDissolveEnter {
   0% {
     transform: translateX(0%);
     opacity: 1;
-    filter: blur(0px);
   }
   30% {
-    opacity: 0.95;
-  }
-  75% {
-    opacity: 0.35;
+    opacity: 0.9;
   }
   100% {
-    transform: translateX(-110%);
+    transform: translateX(-105%);
     opacity: 0;
-    filter: blur(8px);
   }
 }
 
-@keyframes pageSpringRestore {
+@keyframes pageBlurRestore {
   0% {
-    transform: perspective(1200px) scale(0.985) translateX(24px) rotateY(1deg);
-    filter: blur(12px) contrast(1.08) brightness(0.88);
-    opacity: 0.75;
+    filter: blur(8px);
+    opacity: 0.82;
   }
   100% {
-    transform: perspective(1200px) scale(1) translateX(0) rotateY(0deg);
-    filter: blur(0px) contrast(1) brightness(1);
+    filter: blur(0px);
     opacity: 1;
   }
 }
@@ -2513,89 +2457,70 @@ body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(
   position: fixed;
   top: 0;
   left: 0;
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
   background: #ffffff;
   border-radius: 50%;
   pointer-events: none;
   z-index: 10000000;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 2px rgba(255, 255, 255, 1);
-  transition: width 0.18s ease, height 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
-  will-change: left, top;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 0 2px rgba(255, 255, 255, 1);
+  transform: scale(1);
+  transform-origin: center center;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease, box-shadow 0.18s ease;
+  will-change: left, top, transform;
 }
 
 .tactical-cursor-ring {
   position: fixed;
   top: 0;
   left: 0;
-  width: 24px;
-  height: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  margin-left: -16px;
+  margin-top: -16px;
   pointer-events: none;
   z-index: 9999999;
-  transform: translate(-50%, -50%);
-  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), height 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background 0.2s ease;
-  will-change: left, top;
+  color: rgba(255, 255, 255, 0.45);
+  transform: scale(1);
+  transform-origin: center center;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease, opacity 0.2s ease;
+  will-change: left, top, transform;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.tactical-cursor-ring::before {
-  content: "";
-  position: absolute;
-  top: -2.5px;
-  left: 50%;
-  width: 1px;
-  height: 2.5px;
-  background: rgba(255, 255, 255, 0.6);
-  transform: translateX(-50%);
-  box-shadow: 0 24px 0 rgba(255, 255, 255, 0.6);
+.tactical-cursor-ring svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  shape-rendering: geometricPrecision;
 }
 
-.tactical-cursor-ring::after {
-  content: "";
-  position: absolute;
-  left: -2.5px;
-  top: 50%;
-  height: 1px;
-  width: 2.5px;
-  background: rgba(255, 255, 255, 0.6);
-  transform: translateY(-50%);
-  box-shadow: 24px 0 0 rgba(255, 255, 255, 0.6);
-}
-
+/* Hover: идеально симметричное масштабирование вокруг центра */
 body.cursor-hover .tactical-cursor-ring {
-  width: 34px;
-  height: 34px;
-  border-color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-body.cursor-hover .tactical-cursor-ring::before {
-  box-shadow: 0 34px 0 rgba(255, 255, 255, 0.85);
-}
-
-body.cursor-hover .tactical-cursor-ring::after {
-  box-shadow: 34px 0 0 rgba(255, 255, 255, 0.85);
+  transform: scale(1.32);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 body.cursor-hover .tactical-cursor-dot {
-  width: 6px;
-  height: 6px;
+  transform: scale(1.2);
   background: #ffffff;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 1);
 }
 
+/* Click / Active: идеально симметричное сжатие вокруг центра */
 body.cursor-active .tactical-cursor-ring {
-  width: 18px;
-  height: 18px;
-  border-color: #5865f2;
+  transform: scale(0.82);
+  color: #5865f2;
 }
 
 body.cursor-active .tactical-cursor-dot {
-  transform: translate(-50%, -50%) scale(1.5);
+  transform: scale(0.75);
   background: #5865f2;
-  box-shadow: 0 0 10px #5865f2;
+  box-shadow: 0 0 8px #5865f2;
 }
 
 /* ---------- 3. 3D Magnetic Interactive Tilt & Specular Light ---------- */
