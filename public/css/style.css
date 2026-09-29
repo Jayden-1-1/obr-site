@@ -462,6 +462,32 @@ a:hover { color: var(--accent); }
 }
 .settings-card .muted { color: var(--text-dim); font-size: 13.5px; margin-bottom: 12px; }
 
+/* Настройки бегущей строки — чистый прозрачный минимализм без цвета и неона */
+#news-card {
+  position: relative;
+  background: rgba(18, 20, 28, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+#news-card:hover {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#news-card .settings-icon {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #eceef7;
+}
+
+#news-card .border-beam {
+  display: none !important;
+}
+
 /* ---------- Автор рапорта ---------- */
 .report-author {
   display: flex;
@@ -1660,7 +1686,7 @@ tbody tr { transition: background 0.15s ease; }
 .news-ticker.header-ticker {
   margin: 0;
   border: none;
-  border-bottom: 1px solid rgba(88, 101, 242, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0;
   box-shadow: none;
 }

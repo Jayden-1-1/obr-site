@@ -621,7 +621,11 @@ function initBorderBeams() {
   const devBadgeBeam = document.querySelector('#dev-badge .border-beam');
   if (devBadgeBeam) devBadgeBeam.remove();
 
-  const targets = document.querySelectorAll('.discord-linked-glow, #news-card');
+  // Убираем неоновую обводку у карточки настроек бегущей строки
+  const newsCardBeam = document.querySelector('#news-card .border-beam');
+  if (newsCardBeam) newsCardBeam.remove();
+
+  const targets = document.querySelectorAll('.discord-linked-glow');
   targets.forEach((el) => {
     if (el.querySelector('.border-beam')) return;
     const beam = document.createElement('div');
