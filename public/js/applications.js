@@ -25,11 +25,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const data = await apiFetch('/api/applications');
       const list = document.getElementById('apps-list');
-      if (!data.applications.length) {
+      const apps = (data && data.applications) || [];
+      if (!apps.length) {
         list.innerHTML = '<div class="empty">Заявок пока нет</div>';
         return;
       }
-      list.innerHTML = data.applications
+      list.innerHTML = apps
         .map((a, idx) => {
           const statusDone = a.status !== 'pending';
           let actions = '';

@@ -266,8 +266,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadSessions() {
     try {
       const data = await apiFetch('/api/sessions');
-      sessionsList.innerHTML = data.sessions.length
-        ? data.sessions
+      const sessions = (data && data.sessions) || [];
+      sessionsList.innerHTML = sessions.length
+        ? sessions
             .map(
               (s) => `
           <div class="session-item${s.current ? ' current' : ''}">

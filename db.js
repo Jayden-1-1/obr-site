@@ -174,6 +174,12 @@ ensureColumn('users', 'security_question', 'TEXT', '');
 ensureColumn('users', 'security_answer', 'TEXT', '');
 ensureColumn('users', 'discord_id', 'TEXT', '');
 ensureColumn('users', 'discord_username', 'TEXT', '');
+ensureColumn('punishments', 'status', 'TEXT', 'active');
+ensureColumn('punishments', 'removed_at', 'TEXT', '');
+ensureColumn('punishments', 'until_date', 'TEXT', '');
+ensureColumn('punishments', 'issued_by', 'TEXT', '');
+ensureColumn('punishments', 'reason', 'TEXT', '');
+ensureColumn('punishments', 'callsign', 'TEXT', '');
 
 try {
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower ON users(LOWER(username))');

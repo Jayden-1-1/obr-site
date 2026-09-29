@@ -172,11 +172,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const data = await apiFetch('/api/reports');
       const list = document.getElementById('reports-list');
-      if (!data.reports.length) {
+      const reports = (data && data.reports) || [];
+      if (!reports.length) {
         list.innerHTML = '<div class="empty">Рапортов пока нет</div>';
         return;
       }
-      list.innerHTML = data.reports
+      list.innerHTML = reports
         .map((r, i) => {
           let actions = '';
           if (manager) {

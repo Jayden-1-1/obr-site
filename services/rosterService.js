@@ -70,6 +70,8 @@ function memberMention(userId) {
 }
 
 function toISODate(s) {
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   const m = String(s || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
   return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
 }

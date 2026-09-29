@@ -42,11 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const data = await apiFetch('/api/punishments');
       const list = document.getElementById('punishments-list');
-      if (!data.punishments.length) {
+      const punishments = (data && data.punishments) || [];
+      if (!punishments.length) {
         list.innerHTML = '<div class="empty">Наказаний пока нет</div>';
         return;
       }
-      list.innerHTML = data.punishments
+      list.innerHTML = punishments
         .map((p, i) => {
           const status = punishmentStatus(p);
           let actions = '';

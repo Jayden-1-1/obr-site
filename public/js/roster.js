@@ -405,9 +405,9 @@ async function load() {
   const alertEl = document.getElementById('alert');
   try {
     const data = await apiFetch('/api/roster');
-    rosterData = data.roster;
+    rosterData = (data && data.roster) || [];
     rosterData.sort(
-      (a, b) => rankWeight(b) - rankWeight(a) || String(a.created_at).localeCompare(String(b.created_at))
+      (a, b) => rankWeight(b) - rankWeight(a) || String(a.created_at || '').localeCompare(String(b.created_at || ''))
     );
     renderStats();
     render();
@@ -458,7 +458,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     try {
-      const users = (await apiFetch('/api/users')).users;
+      const data = await apiFetch('/api/users');
+      const users = (data && data.users) || [];
       document.getElementById('r-user').innerHTML =
         '<option value="">— не привязывать —</option>' +
         users
@@ -468,7 +469,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           )
           .join('');
     } catch (e) {
-      showAlert(alertEl, 'err', e.message);
+      console.warn('Failed to load users for roster binding:', e);
     }
   }
 

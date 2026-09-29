@@ -4,16 +4,8 @@ const {
   api,
   fail,
   requireAuth,
-  requireManager,
   requireCommander,
-  publicUser,
-  getUser,
 } = require('../middleware/auth');
-const {
-  currentCommander,
-  ensureCommanderInRoster,
-} = require('../services/rosterService');
-const { sendEmailCode, consumeCode } = require('../services/codeService');
 
 const router = express.Router();
 
@@ -89,107 +81,6 @@ router.put(
     const text = String(req.body.text || '').trim().slice(0, 100);
     setSetting('news_ticker', text);
     res.json({ ok: true, text });
-  })
-);
-
-// ---------- Manage User Roles (Commander/Manager) ----------
-router.get(
-  '/users',
-  requireAuth,
-  requireManager,
-  api((req, res) => {
-    const users = db.prepare('SELECT * FROM users ORDER BY created_at, id').all();
-    res.json({
-      users: users.map((u) => {
-        const p = publicUser(u);
-        delete p.security_question;
-        return p;
-      }),
-    });
-  })
-);
-
-router.put(
-  '/users/:id/role',
-  requireAuth,
-  requireCommander,
-  api((req, res) => {
-    const target = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
-    if (!target) return fail(res, 404, 'Пользователь не найден');
-    const role = String(req.body.role || '');
-    if (!['user', 'staff', 'zam', 'commander'].includes(role)) return fail(res, 400, 'Недопустимая роль');
-
-    if (target.id === req.user.id && role !== 'commander') {
-      return fail(res, 400, 'Нельзя снять с себя роль командира — сначала назначьте преемника');
-    }
-
-    if (role === 'commander' && target.role !== 'commander') {
-      const cmdr = currentCommander();
-      if (cmdr && cmdr.id !== target.id) {
-        db.prepare("UPDATE users SET role = 'zam' WHERE id = ?").run(cmdr.id);
-        const oldRow = db.prepare('SELECT id FROM roster WHERE user_id = ?').get(cmdr.id);
-        if (oldRow) {
-          db.prepare("UPDATE roster SET position = 'Зам. Командира' WHERE id = ?").run(oldRow.id);
-        }
-      }
-    }
-
-    db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, target.id);
-    ensureCommanderInRoster();
-    res.json({ user: publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(target.id)) });
-  })
-);
-
-// ---------- Transfer Commander Role ----------
-router.post(
-  '/users/me/transfer/send',
-  requireAuth,
-  requireCommander,
-  api(async (req, res) => {
-    const username = String(req.body.username || '').trim().slice(0, 40);
-    if (!username) return fail(res, 400, 'Укажите логин пользователя');
-    const target = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-    if (!target) return fail(res, 404, 'Пользователь с таким логином не найден');
-    if (target.id === req.user.id) return fail(res, 400, 'Вы не можете передать права самому себе');
-    if (target.role === 'commander') return fail(res, 400, 'Этот пользователь уже командир');
-
-    const codeKey = `u:${req.user.id}`;
-    const result = await sendEmailCode(codeKey, 'transfer', { discordId: req.user.discord_id });
-    if (result.error) return fail(res, 429, result.error);
-    const channels = (result.channels || []).join(',');
-    if (result.dev) return res.json({ ok: true, dev: true, code: result.code, username, channels });
-    res.json({ ok: true, username, channels });
-  })
-);
-
-router.post(
-  '/users/me/transfer/confirm',
-  requireAuth,
-  requireCommander,
-  api((req, res) => {
-    const username = String(req.body.username || '').trim().slice(0, 40);
-    const code = String(req.body.code || '').trim();
-    if (!username) return fail(res, 400, 'Укажите логин пользователя');
-    const target = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-    if (!target) return fail(res, 404, 'Пользователь с таким логином не найден');
-    if (target.id === req.user.id) return fail(res, 400, 'Вы не можете передать права самому себе');
-    if (target.role === 'commander') return fail(res, 400, 'Этот пользователь уже командир');
-    if (!/^\d{6}$/.test(code)) return fail(res, 400, 'Введите 6-значный код подтверждения');
-
-    const codeKey = `u:${req.user.id}`;
-    const check = consumeCode(codeKey, code);
-    if (check.error) return fail(res, 400, check.error);
-
-    const oldCmdr = req.user;
-    db.prepare("UPDATE users SET role = 'commander' WHERE id = ?").run(target.id);
-    db.prepare("UPDATE users SET role = 'zam' WHERE id = ?").run(oldCmdr.id);
-    const oldRow = db.prepare('SELECT id FROM roster WHERE user_id = ?').get(oldCmdr.id);
-    if (oldRow) {
-      db.prepare("UPDATE roster SET position = 'Зам. Командира' WHERE id = ?").run(oldRow.id);
-    }
-    ensureCommanderInRoster();
-
-    res.json({ user: publicUser(getUser(target.id)) });
   })
 );
 

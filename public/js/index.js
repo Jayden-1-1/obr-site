@@ -167,13 +167,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     try {
       const data = await apiFetch('/api/documents');
-      docsCache = data.documents || [];
+      docsCache = (data && data.documents) || [];
       const list = document.getElementById('docs-list');
-      if (!data.documents.length) {
+      if (!docsCache.length) {
         list.innerHTML = '<div class="empty">Документов пока нет</div>';
         return;
       }
-      list.innerHTML = data.documents
+      list.innerHTML = docsCache
         .map(
           (d, i) => `
         <div class="doc-item reveal" style="--rd:${Math.min(i * 60, 240)}ms">
