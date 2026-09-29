@@ -94,7 +94,7 @@ function requireAuth(req, res, next) {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
   if (!user) {
     const sid = req.sessionID;
-    if (req.session) {
+    if (req.session && typeof req.session.destroy === 'function') {
       req.session.destroy(() => {
         db.prepare('DELETE FROM sessions WHERE sid = ?').run(sid);
         dropTrackedSession(sid);
@@ -150,6 +150,9 @@ module.exports = {
   requireManager,
   requireCommander,
   requireStaff,
+  isStaff,
+  isManager,
+  isCommander,
   publicUser,
   getUser,
   deviceLabel,

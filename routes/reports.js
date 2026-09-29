@@ -8,6 +8,9 @@ const {
   requireAuth,
   requireStaff,
   requireManager,
+  isStaff,
+  isManager,
+  isCommander,
   getUser,
 } = require('../middleware/auth');
 const { IMAGE_MIME, setContentDisposition } = require('../middleware/upload');

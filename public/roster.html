@@ -53,6 +53,14 @@
 
       <div class="roster-stats" id="roster-stats"></div>
 
+      <div class="filter-bar" id="roster-filter-bar">
+        <button type="button" class="filter-pill active" data-status="all">Все <span class="pill-count" id="rcount-all">0</span></button>
+        <button type="button" class="filter-pill" data-status="active">В строю <span class="pill-count" id="rcount-active">0</span></button>
+        <button type="button" class="filter-pill" data-status="vacation">В отпуске <span class="pill-count" id="rcount-vacation">0</span></button>
+        <button type="button" class="filter-pill" data-status="warned">С выговорами <span class="pill-count" id="rcount-warned">0</span></button>
+        <button type="button" class="filter-pill" data-status="fired">Уволенные <span class="pill-count" id="rcount-fired">0</span></button>
+      </div>
+
       <div class="table-wrap reveal">
         <table class="roster-table">
           <thead>

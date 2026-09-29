@@ -8,3 +8,4 @@ data-seed/
 *.log
 .env
 .env.local
+scratch/

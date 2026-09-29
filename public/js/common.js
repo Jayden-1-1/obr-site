@@ -258,7 +258,13 @@ async function initHeader(active) {
       <div class="header-inner" id="header-inner">
         <a class="brand" href="/">
           <img class="logo" src="/img/logo.png" alt="О.Б.Р">
-          <div class="title">${esc(SITE.short)}<small>Отряд Быстрого Реагирования</small></div>
+          <div class="title">
+            <div style="display:flex;align-items:center;gap:7px">
+              <span>${esc(SITE.short)}</span>
+              <span class="brand-status">online</span>
+            </div>
+            <small>Отряд Быстрого Реагирования</small>
+          </div>
         </a>
         <nav class="main-nav" id="main-nav">${navHtml}</nav>
         ${userHtml}
