@@ -1747,8 +1747,25 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
     transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
     visibility 0.45s;
-  overflow: hidden;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  overflow-x: hidden;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.dev-panel::-webkit-scrollbar {
+  width: 3px;
+}
+
+.dev-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dev-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
 }
 
 .dev-panel.open {
@@ -1839,15 +1856,23 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
 }
 
 .dev-panel.open .dev-panel-body {
-  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.15s;
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.14s;
 }
 
-.dev-panel.open .dev-panel-card {
-  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.22s;
+.dev-panel.open .dev-panel-version {
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.20s;
+}
+
+.dev-panel.open .dev-panel-creator {
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.26s;
+}
+
+.dev-panel.open .dev-panel-card:not(.dev-panel-version):not(.dev-panel-creator) {
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.26s;
 }
 
 .dev-panel.open .dev-panel-shop {
-  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.29s;
+  animation: devPanelItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both 0.32s;
 }
 
 @keyframes devPanelItemCascade {
@@ -1941,6 +1966,58 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   letter-spacing: 0.8px;
   color: rgba(255, 255, 255, 0.5);
   margin-bottom: 8px;
+}
+
+.dev-version-box {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dev-version-box:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.dev-version-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dev-version-num {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+.dev-version-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  padding: 1px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.18);
+}
+
+.dev-version-notice {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.35;
 }
 
 .dev-discord-chip {

@@ -904,7 +904,18 @@ function initDeveloperBadge() {
         <div class="dev-panel-copyright">Все права защищены © 2026</div>
       </div>
 
-      <div class="dev-panel-card">
+      <div class="dev-panel-card dev-panel-version">
+        <div class="dev-panel-label">Версия сайта</div>
+        <div class="dev-version-box">
+          <div class="dev-version-line">
+            <span class="dev-version-num">2.0.1</span>
+            <span class="dev-version-pill">[BETA]</span>
+          </div>
+          <div class="dev-version-notice">Могут присутствовать баги.</div>
+        </div>
+      </div>
+
+      <div class="dev-panel-card dev-panel-creator">
         <div class="dev-panel-label">Создатель</div>
         <div class="dev-discord-chip" onclick="copyDiscordUser('.martinwinskton')" title="Нажмите, чтобы скопировать Discord тег">
           <svg class="dev-discord-icon" viewBox="0 0 24 24" width="16" height="16">
