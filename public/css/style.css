@@ -304,6 +304,11 @@ a:hover { color: var(--accent); }
   100% { left: 200%; }
 }
 
+.banner-card picture {
+  display: block;
+  width: 100%;
+}
+
 .banner-img {
   width: 100%;
   height: auto;

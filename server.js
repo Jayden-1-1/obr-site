@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
@@ -39,6 +40,9 @@ const app = express();
 app.set('trust proxy', true);
 const PORT = process.env.PORT || 3000;
 
+// HTTP Gzip/Deflate compression for fast cross-border transfer
+app.use(compression());
+
 // Security & Parsing
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -63,8 +67,29 @@ app.use(
   })
 );
 
-// Static Assets
-app.use(express.static(path.join(__dirname, 'public')));
+// Lightweight Health / Keep-Alive Ping
+app.get('/api/ping', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ ok: true, uptime: Math.floor(process.uptime()), timestamp: Date.now() });
+});
+
+// Static Assets with Cache-Control headers for rapid repeat loads
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    maxAge: '7d',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (/\.(jpg|jpeg|png|webp|svg|ico|woff2?|ttf|mp3|ogg)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+      } else if (/\.(css|js)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      } else if (/\.html$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+      }
+    },
+  })
+);
 
 // Multi-file upload for reports and applications
 app.post(
@@ -161,6 +186,29 @@ if (require.main === module) {
       console.error('[SERVER] Ошибка запуска сервера:', err);
     }
   });
+}
+
+// Keep-alive heartbeat for Render free tier (prevents cold-start 50s idle spin-down)
+const RENDER_EXTERNAL_URL =
+  process.env.RENDER_EXTERNAL_URL ||
+  (process.env.RENDER || process.env.NODE_ENV === 'production' ? 'https://obr-site.onrender.com' : null);
+
+if (RENDER_EXTERNAL_URL) {
+  const https = require('https');
+  const PING_INTERVAL_MS = 12 * 60 * 1000; // 12 minutes (Render idle sleep threshold is 15 minutes)
+  setInterval(() => {
+    try {
+      const pingUrl = `${RENDER_EXTERNAL_URL.replace(/\/+$/, '')}/api/ping`;
+      https.get(pingUrl, (res) => {
+        res.resume();
+      }).on('error', (err) => {
+        console.warn('[KEEP-ALIVE] Ping error:', err.message);
+      });
+    } catch (e) {
+      console.warn('[KEEP-ALIVE] Interval error:', e.message);
+    }
+  }, PING_INTERVAL_MS);
+  console.log(`[KEEP-ALIVE] Heartbeat initialized for ${RENDER_EXTERNAL_URL} (every 12m)`);
 }
 
 module.exports = app;

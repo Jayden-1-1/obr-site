@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>О.Б.Р — Отряд Быстрого Реагирования</title>
   <link rel="icon" type="image/png" href="/img/logo.png">
+  <link rel="preload" as="image" href="/img/fon.webp" type="image/webp">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -13,7 +14,10 @@
   <section class="hero-banner">
     <div class="container">
       <div class="banner-card">
-        <img class="banner-img" src="/img/fon.jpg" alt="О.Б.Р — Отряд Быстрого Реагирования">
+        <picture>
+          <source srcset="/img/fon.webp" type="image/webp">
+          <img class="banner-img" src="/img/fon.jpg" alt="О.Б.Р — Отряд Быстрого Реагирования" fetchpriority="high" decoding="async">
+        </picture>
       </div>
     </div>
   </section>
