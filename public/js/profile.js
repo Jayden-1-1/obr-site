@@ -395,8 +395,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       f('dc-client-id').value = cfg.client_id;
       f('dc-guild-id').value = cfg.guild_id;
       f('dc-role-id').value = cfg.role_on_accept;
+      if (f('dc-role-fighter')) f('dc-role-fighter').value = cfg.role_fighter || '';
+      if (f('dc-role-whitelist')) f('dc-role-whitelist').value = cfg.whitelist_roles || '';
       f('dc-role-civilian').value = cfg.role_civilian;
       f('dc-role-builder').value = cfg.role_builder;
+      if (f('dc-role-warn-1')) f('dc-role-warn-1').value = cfg.role_warn_1 || '';
+      if (f('dc-role-warn-2')) f('dc-role-warn-2').value = cfg.role_warn_2 || '';
+      if (f('dc-role-warn-3')) f('dc-role-warn-3').value = cfg.role_warn_3 || '';
+      if (f('dc-role-vacation')) f('dc-role-vacation').value = cfg.role_vacation || '';
       f('dc-webhook').value = cfg.webhook_url;
       f('dc-webhook-warnings').value = cfg.warnings_webhook_url;
       if (f('dc-redirect-uri')) f('dc-redirect-uri').value = cfg.redirect_uri || '';
@@ -422,8 +428,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             bot_token: f('dc-bot-token').value,
             guild_id: f('dc-guild-id').value,
             role_on_accept: f('dc-role-id').value,
+            role_fighter: f('dc-role-fighter') ? f('dc-role-fighter').value : '',
+            whitelist_roles: f('dc-role-whitelist') ? f('dc-role-whitelist').value : '',
             role_civilian: f('dc-role-civilian').value,
             role_builder: f('dc-role-builder').value,
+            role_warn_1: f('dc-role-warn-1') ? f('dc-role-warn-1').value : '',
+            role_warn_2: f('dc-role-warn-2') ? f('dc-role-warn-2').value : '',
+            role_warn_3: f('dc-role-warn-3') ? f('dc-role-warn-3').value : '',
+            role_vacation: f('dc-role-vacation') ? f('dc-role-vacation').value : '',
             webhook_url: f('dc-webhook').value,
             warnings_webhook_url: f('dc-webhook-warnings').value,
             redirect_uri: f('dc-redirect-uri') ? f('dc-redirect-uri').value : '',

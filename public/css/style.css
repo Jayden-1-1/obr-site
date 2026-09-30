@@ -1811,29 +1811,48 @@ td .num { color: var(--text-faint); font-size: 12.5px; }
   }
 }
 
+.dev-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  background: rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
+}
+
+.dev-panel-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
 .dev-panel-close {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 26px;
-  height: 26px;
+  z-index: 100 !important;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer !important;
+  pointer-events: auto !important;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .dev-panel-close:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.45);
   transform: rotate(90deg) scale(1.12);
 }
 

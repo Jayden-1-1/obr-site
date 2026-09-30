@@ -17,7 +17,7 @@ function positionAllowedFor(position, userId) {
   if (position !== 'Командир О.Б.Р') return true;
   if (!userId) return true;
   const cmdr = currentCommander();
-  return !cmdr || cmdr.id === userId;
+  return !cmdr || Number(cmdr.id) === Number(userId);
 }
 
 function nextEmployeeNumber() {
@@ -117,7 +117,11 @@ function desiredRolesForEntry(entry) {
   const add = (v) => {
     for (const r of discord.parseRoles(v)) set.add(r);
   };
-  add(cfg.role_on_accept);
+  const isActive = entry.status === 'active';
+  if (isActive) {
+    add(cfg.role_on_accept);
+    add(cfg.role_fighter || '1440260887943450706');
+  }
   const map = cfg.role_map || {};
   add((map.rank || {})[entry.rank]);
   add((map.position || {})[entry.position]);
@@ -127,8 +131,10 @@ function desiredRolesForEntry(entry) {
   for (const g of map.position_groups || []) {
     if ((g.positions || []).includes(entry.position)) add(g.roles);
   }
-  add((map.warnings || {})[String(entry.warnings)]);
-  if (vacationActive(entry)) add(map.vacation);
+  const warnsMap = map.warnings || {};
+  const warnRole = cfg[`role_warn_${entry.warnings}`] || warnsMap[String(entry.warnings)];
+  if (warnRole) add(warnRole);
+  if (vacationActive(entry)) add(cfg.role_vacation || map.vacation);
   if (entry.builder) add(cfg.role_builder);
   return [...set];
 }

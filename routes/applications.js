@@ -188,6 +188,13 @@ router.post(
       );
 
     if (type === 'join') {
+      const cfg = discord.loadConfig();
+      const fighterRole = cfg.role_fighter || '1440260887943450706';
+      if (req.user.discord_id && fighterRole) {
+        discord.addRoleToMember(req.user.discord_id, fighterRole).catch((err) => {
+          console.error('[discord] Не удалось выдать роль бойца при подаче заявки:', err);
+        });
+      }
       discord.log({
         title: 'Новая заявка на вступление',
         description: `**${callsign}** хочет вступить в отряд.`,

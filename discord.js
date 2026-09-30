@@ -50,14 +50,22 @@ function parseRoles(value) {
 
 function publicConfig() {
   const c = loadConfig();
+  const map = c.role_map || {};
+  const warns = map.warnings || {};
   return {
     configured: isConfigured(),
     oauth_configured: isOAuthConfigured(),
     client_id: c.client_id || '',
     guild_id: c.guild_id || '',
+    role_fighter: c.role_fighter || '1440260887943450706',
+    whitelist_roles: c.whitelist_roles || '',
     role_on_accept: c.role_on_accept || '',
     role_civilian: c.role_civilian || '',
     role_builder: c.role_builder || '',
+    role_warn_1: c.role_warn_1 || warns['1'] || '',
+    role_warn_2: c.role_warn_2 || warns['2'] || '',
+    role_warn_3: c.role_warn_3 || warns['3'] || '',
+    role_vacation: c.role_vacation || map.vacation || '',
     redirect_uri: c.redirect_uri || '',
     webhook_url: c.webhook_url || '',
     warnings_webhook_url: c.warnings_webhook_url || '',
@@ -72,12 +80,35 @@ async function saveFromRequest(body) {
   const cur = loadConfig();
   const s = (v) => String(v || '').trim();
   const next = { ...cur };
-  for (const k of ['client_id', 'guild_id', 'role_on_accept', 'role_civilian', 'role_builder', 'webhook_url', 'warnings_webhook_url', 'redirect_uri']) {
+  for (const k of [
+    'client_id',
+    'guild_id',
+    'role_fighter',
+    'whitelist_roles',
+    'role_on_accept',
+    'role_civilian',
+    'role_builder',
+    'role_warn_1',
+    'role_warn_2',
+    'role_warn_3',
+    'role_vacation',
+    'webhook_url',
+    'warnings_webhook_url',
+    'redirect_uri',
+  ]) {
     if (body[k] !== undefined) next[k] = s(body[k]);
   }
   for (const k of ['bot_token', 'client_secret']) {
     if (body[k] !== undefined && s(body[k])) next[k] = s(body[k]);
   }
+
+  next.role_map = next.role_map || {};
+  next.role_map.warnings = next.role_map.warnings || {};
+  if (next.role_warn_1 !== undefined) next.role_map.warnings['1'] = next.role_warn_1;
+  if (next.role_warn_2 !== undefined) next.role_map.warnings['2'] = next.role_warn_2;
+  if (next.role_warn_3 !== undefined) next.role_map.warnings['3'] = next.role_warn_3;
+  if (next.role_vacation !== undefined) next.role_map.vacation = next.role_vacation;
+
   saveConfig(next);
   return publicConfig();
 }
@@ -221,6 +252,17 @@ async function getMemberRoles(discordId) {
   }
 }
 
+function whitelistRoleIds() {
+  const c = loadConfig();
+  const set = new Set();
+  const add = (v) => {
+    for (const r of parseRoles(v)) set.add(r);
+  };
+  add(c.role_fighter || '1440260887943450706');
+  add(c.whitelist_roles);
+  return set;
+}
+
 function managedRoleIds() {
   const c = loadConfig();
   const set = new Set();
@@ -230,6 +272,10 @@ function managedRoleIds() {
   add(c.role_on_accept);
   add(c.role_civilian);
   add(c.role_builder);
+  add(c.role_warn_1);
+  add(c.role_warn_2);
+  add(c.role_warn_3);
+  add(c.role_vacation);
   const map = c.role_map || {};
   for (const k of ['rank', 'position']) {
     for (const v of Object.values(map[k] || {})) add(v);
@@ -246,12 +292,14 @@ async function syncRoles(discordId, desiredRoleIds) {
   if (!c.bot_token || !c.guild_id || !discordId) return { ok: false, reason: 'not-configured' };
   const desired = new Set(parseRoles(desiredRoleIds));
   const managed = new Set(managedRoleIds());
+  const whitelist = whitelistRoleIds();
   const current = await getMemberRoles(discordId);
   if (current === null) {
     for (const r of desired) await addRoleToMember(discordId, r);
     return { ok: true, partial: true };
   }
   for (const r of current) {
+    if (whitelist.has(r)) continue;
     if (managed.has(r) && !desired.has(r)) await removeRoleFromMember(discordId, r);
   }
   for (const r of desired) {
@@ -263,7 +311,19 @@ async function syncRoles(discordId, desiredRoleIds) {
 async function resetRoles(discordId) {
   const c = loadConfig();
   const civilian = parseRoles(c.role_civilian);
-  return syncRoles(discordId, civilian.join(','));
+  const managed = new Set(managedRoleIds());
+  const current = await getMemberRoles(discordId);
+  if (current) {
+    for (const r of current) {
+      if (managed.has(r) && !civilian.includes(r)) {
+        await removeRoleFromMember(discordId, r);
+      }
+    }
+  }
+  for (const r of civilian) {
+    await addRoleToMember(discordId, r);
+  }
+  return { ok: true };
 }
 
 async function getOAuthURL(redirectUri, state) {
@@ -324,6 +384,7 @@ module.exports = {
   parseRoles,
   getMemberRoles,
   managedRoleIds,
+  whitelistRoleIds,
   syncRoles,
   resetRoles,
   getOAuthURL,

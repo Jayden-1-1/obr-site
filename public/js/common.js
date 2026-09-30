@@ -824,6 +824,7 @@ function initReveal() {
 function toggleDevPanel(force) {
   const p = document.getElementById('dev-panel');
   const b = document.getElementById('dev-badge');
+  const d = document.getElementById('dev-panel-backdrop');
   if (!p) return;
   const isOpen = typeof force === 'boolean' ? force : !p.classList.contains('open');
   p.classList.toggle('open', isOpen);
@@ -831,6 +832,9 @@ function toggleDevPanel(force) {
   if (b) {
     b.classList.toggle('active', isOpen);
     b.setAttribute('aria-expanded', isOpen.toString());
+  }
+  if (d) {
+    d.classList.toggle('open', isOpen);
   }
 }
 
@@ -873,7 +877,9 @@ function initDeveloperBadge() {
   document.body.insertAdjacentHTML(
     'beforeend',
     `
-    <div class="dev-badge" id="dev-badge" title="Информация и создатель сайта" onclick="toggleDevPanel()">
+    <div class="dev-panel-backdrop" id="dev-panel-backdrop" aria-hidden="true"></div>
+
+    <div class="dev-badge" id="dev-badge" title="Информация и создатель сайта" role="button" tabindex="0" aria-label="Информация и создатель сайта">
       <div class="dev-badge-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="16 18 22 12 16 6"></polyline>
@@ -885,7 +891,12 @@ function initDeveloperBadge() {
 
     <div class="dev-panel" id="dev-panel" role="dialog" aria-modal="false" aria-label="О сайте">
       <div class="dev-panel-specular"></div>
-      <button type="button" class="dev-panel-close" onclick="toggleDevPanel(false)" aria-label="Закрыть панель">×</button>
+      <button type="button" class="dev-panel-close" id="dev-panel-close" aria-label="Закрыть панель" title="Закрыть панель">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
 
       <div class="dev-panel-head">
         <div class="dev-panel-logo">
@@ -937,6 +948,39 @@ function initDeveloperBadge() {
       </div>
     </div>`
   );
+
+  const closeBtn = document.getElementById('dev-panel-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDevPanel(false);
+    });
+  }
+
+  const badgeBtn = document.getElementById('dev-badge');
+  if (badgeBtn) {
+    badgeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDevPanel();
+    });
+    badgeBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDevPanel();
+      }
+    });
+  }
+
+  const backdrop = document.getElementById('dev-panel-backdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDevPanel(false);
+    });
+  }
 
   document.addEventListener('click', (e) => {
     const p = document.getElementById('dev-panel');

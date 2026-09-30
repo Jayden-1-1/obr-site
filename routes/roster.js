@@ -70,11 +70,12 @@ router.post(
     if (db.prepare('SELECT id FROM roster WHERE employee_number = ?').get(employee_number)) {
       return fail(res, 409, 'Сотрудник с таким номером уже есть в штате');
     }
-    if (!positionAllowedFor(position, b.user_id || null)) {
+    const userId = b.user_id ? Number(b.user_id) : null;
+    if (!positionAllowedFor(position, userId)) {
       return fail(res, 400, 'Должность «Командир О.Б.Р» может занимать только действующий командир');
     }
-    if (b.user_id) {
-      const du = db.prepare('SELECT id FROM roster WHERE user_id = ?').get(b.user_id);
+    if (userId) {
+      const du = db.prepare('SELECT id FROM roster WHERE user_id = ?').get(userId);
       if (du) return fail(res, 409, 'Этот пользователь уже есть в штатном расписании');
     }
 
@@ -87,14 +88,14 @@ router.post(
         callsign,
         rank,
         position,
-        b.user_id || null,
+        userId,
         String(b.age || '').trim().slice(0, 10),
         String(b.discord || '').trim().slice(0, 60)
       );
 
-    syncUserRole(b.user_id, position, true);
+    syncUserRole(userId, position, true);
     const newEntry = db.prepare('SELECT * FROM roster WHERE id = ?').get(info.lastInsertRowid);
-    syncMemberDiscordRoles(b.user_id, newEntry);
+    syncMemberDiscordRoles(userId, newEntry);
 
     res.json({ roster: newEntry });
   })
@@ -125,7 +126,7 @@ router.put(
       .get(employee_number, entry.id);
     if (dup) return fail(res, 409, 'Сотрудник с таким номером уже есть в штате');
 
-    const nextUserId = b.user_id !== undefined ? (b.user_id || null) : entry.user_id;
+    const nextUserId = b.user_id !== undefined ? (b.user_id ? Number(b.user_id) : null) : (entry.user_id ? Number(entry.user_id) : null);
     if (!positionAllowedFor(position, nextUserId)) {
       return fail(res, 400, 'Должность «Командир О.Б.Р» может занимать только действующий командир');
     }
@@ -136,7 +137,7 @@ router.put(
       if (du) return fail(res, 409, 'Этот пользователь уже есть в штатном расписании');
     }
 
-    if (entry.user_id && entry.user_id !== nextUserId) {
+    if (entry.user_id && Number(entry.user_id) !== Number(nextUserId)) {
       const old = getUser(entry.user_id);
       if (old && old.role !== 'commander') {
         db.prepare("UPDATE users SET role = 'user' WHERE id = ?").run(old.id);

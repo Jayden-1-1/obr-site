@@ -175,6 +175,18 @@ async function handleOAuthCallback(req, res) {
       discordUsername,
       req.session.userId
     );
+    const activeRoster = db.prepare("SELECT * FROM roster WHERE user_id = ? AND status = 'active'").get(req.session.userId);
+    if (activeRoster) {
+      const { syncMemberDiscordRoles } = require('../services/rosterService');
+      syncMemberDiscordRoles(req.session.userId, activeRoster);
+    } else {
+      const pendingJoin = db.prepare("SELECT id FROM applications WHERE user_id = ? AND type = 'join' AND status = 'pending'").get(req.session.userId);
+      if (pendingJoin) {
+        const cfg = discord.loadConfig();
+        const fighterRole = cfg.role_fighter || '1440260887943450706';
+        if (fighterRole) discord.addRoleToMember(discordId, fighterRole).catch(() => {});
+      }
+    }
     return res.redirect('/profile.html?discord=ok');
   }
 

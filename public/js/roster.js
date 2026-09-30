@@ -59,7 +59,7 @@ async function editRoster(id) {
     document.getElementById('r-position').value = r.position;
     document.getElementById('r-age').value = r.age || '';
     document.getElementById('r-discord').value = r.discord || '';
-    document.getElementById('r-user').value = r.user_id || '';
+    document.getElementById('r-user').value = r.user_id ? String(r.user_id) : '';
     clearAlert(document.getElementById('roster-modal-alert'));
     document.getElementById('roster-modal').style.display = 'flex';
   } catch (e) {
@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       position: document.getElementById('r-position').value,
       age: document.getElementById('r-age').value,
       discord: document.getElementById('r-discord').value,
-      user_id: document.getElementById('r-user').value || null,
+      user_id: document.getElementById('r-user').value ? Number(document.getElementById('r-user').value) : null,
     };
     try {
       if (editingId) {
