@@ -595,12 +595,16 @@ function initButtonPhysics() {
   });
 }
 
-/* ---------- 3. Магнитный интерактивный 3D-наклон карточек (3D Magnetic Tilt) ---------- */
+/* ---------- 3. Магнитный интерактивный 3D-наклон карточек (3D Magnetic Tilt - Optimized) ---------- */
 function init3DTilt() {
   if (window.__tiltInit) return;
   window.__tiltInit = true;
 
-  // Исключаем dev-badge, оставляем карточки и панели
+  // Skip on touch screens or if prefers-reduced-motion is active
+  if (window.matchMedia && (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    return;
+  }
+
   const selector = '.card, .settings-card, .stat-card, .doc-item, .panel';
 
   const setupElement = (el) => {
@@ -608,32 +612,30 @@ function init3DTilt() {
     el.dataset.tiltReady = '1';
     el.classList.add('interactive-tilt');
 
+    let rafId = null;
     el.addEventListener('mousemove', (e) => {
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-      const rotX = -((y - cy) / cy) * 5;
-      const rotY = ((x - cx) / cx) * 6;
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const rotX = -((y - cy) / cy) * 4;
+        const rotY = ((x - cx) / cx) * 5;
 
-      el.style.transform = `perspective(900px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-3px)`;
-      el.style.setProperty('--specular-x', `${x}px`);
-      el.style.setProperty('--specular-y', `${y}px`);
-    });
+        el.style.transform = `perspective(900px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg) translateY(-2px)`;
+      });
+    }, { passive: true });
 
     el.addEventListener('mouseleave', () => {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
       el.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0)';
     });
   };
 
   document.querySelectorAll(selector).forEach(setupElement);
-
-  if (window.MutationObserver) {
-    new MutationObserver(() => {
-      document.querySelectorAll(selector).forEach(setupElement);
-    }).observe(document.body, { childList: true, subtree: true });
-  }
 }
 
 /* ---------- 4. Минималистичный курсор-точка с мягкими анимациями ---------- */
@@ -836,6 +838,69 @@ function toggleDevPanel(force) {
   if (d) {
     d.classList.toggle('open', isOpen);
   }
+  if (isOpen) {
+    updateDevSecurityStatus();
+  }
+}
+
+async function updateDevSecurityStatus() {
+  try {
+    const res = await fetch('/api/v1/shield/status?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    const dot = document.getElementById('dev-sec-dot');
+    const label = document.getElementById('dev-sec-mode');
+    const btn = document.getElementById('btn-toggle-site-lock');
+    if (!dot || !label || !btn) return;
+
+    if (data.locked) {
+      dot.className = 'dev-sec-dot locked';
+      label.textContent = 'ЗАБЛОКИРОВАН · LOCKDOWN';
+      label.style.color = '#ef4444';
+      btn.className = 'btn-sec-toggle btn-sec-unlock';
+      btn.textContent = '🔓 Разблокировать сайт';
+    } else {
+      dot.className = 'dev-sec-dot';
+      label.textContent = 'АКТИВНА · NORMAL';
+      label.style.color = '#22c55e';
+      btn.className = 'btn-sec-toggle btn-sec-lock';
+      btn.textContent = '🔒 Экстренная блокировка (Kill Switch)';
+    }
+  } catch (_) {}
+}
+
+async function toggleManualSiteLock() {
+  try {
+    const statusRes = await fetch('/api/v1/shield/status?t=' + Date.now());
+    const curr = statusRes.ok ? await statusRes.json() : {};
+    const willLock = !curr.locked;
+
+    const confirmMsg = willLock
+      ? 'Активировать экстренную блокировку Kill Switch? Сайт мгновенно заблокируется для всех посетителей с показом официального баннера MartinWSecurityWeb.'
+      : 'Снять блокировку и восстановить публичный доступ к сайту?';
+
+    if (!confirm(confirmMsg)) return;
+
+    const res = await fetch('/api/security/manual-lock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        locked: willLock,
+        reason: 'Operator dashboard toggle'
+      })
+    });
+
+    if (res.ok) {
+      showToast('ok', willLock ? 'Сайт экстренно заблокирован' : 'Сайт разблокирован');
+      updateDevSecurityStatus();
+      setTimeout(() => window.location.reload(), 600);
+    } else {
+      const err = await res.json();
+      showToast('err', err.error || 'Ошибка изменения блокировки');
+    }
+  } catch (e) {
+    showToast('err', 'Сетевая ошибка: ' + e.message);
+  }
 }
 
 function copyDiscordUser(tag) {
@@ -946,8 +1011,31 @@ function initDeveloperBadge() {
           <span>@MartinWShop_bot</span>
         </a>
       </div>
+
+      <!-- MartinWSecurityWeb Cyber Widget -->
+      <div class="dev-panel-security" id="dev-security-card">
+        <div class="dev-panel-label">Защита MartinWSecurityWeb</div>
+        <div class="dev-sec-status-row">
+          <span class="dev-sec-dot" id="dev-sec-dot"></span>
+          <span id="dev-sec-mode">АКТИВНА · NORMAL</span>
+        </div>
+        <div style="margin-top:8px;">
+          <button type="button" class="btn-sec-toggle btn-sec-lock" id="btn-toggle-site-lock">
+            🔒 Экстренная блокировка (Kill Switch)
+          </button>
+        </div>
+      </div>
     </div>`
   );
+
+  const secLockBtn = document.getElementById('btn-toggle-site-lock');
+  if (secLockBtn) {
+    secLockBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleManualSiteLock();
+    });
+  }
 
   const closeBtn = document.getElementById('dev-panel-close');
   if (closeBtn) {
@@ -1157,3 +1245,13 @@ window.addEventListener('scroll', () => {
 window.addEventListener('resize', () => {
   if (__dpPopup && __dpInput) position(__dpInput.getBoundingClientRect());
 });
+
+// Automatically ensure MartinWSecurityWeb Shield is active across all site pages
+(function ensureSecurityShield() {
+  if (window.__MW_SECURITY_SHIELD_INITIALIZED__) return;
+  if (document.querySelector('script[src*="site_shield.js"]')) return;
+  const s = document.createElement('script');
+  s.src = '/js/site_shield.js?v=2';
+  s.async = true;
+  document.head.appendChild(s);
+})();

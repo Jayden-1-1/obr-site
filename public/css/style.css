@@ -3010,18 +3010,19 @@ a.btn.discord-nav-btn:hover {
     rgba(255, 255, 255, 0.02) 140px,
     rgba(10, 14, 20, 0.35) 100%
   );
-  backdrop-filter: blur(44px) saturate(190%) contrast(102%) brightness(1.03);
-  -webkit-backdrop-filter: blur(44px) saturate(190%) contrast(102%) brightness(1.03);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
   border-top-left-radius: 48px;
   border-bottom-left-radius: 48px;
-  border-left: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-left: 1.5px solid rgba(255, 255, 255, 0.4);
   box-shadow: 
-    -32px 0 80px rgba(0, 0, 0, 0.7),
-    -8px 0 24px rgba(0, 0, 0, 0.45),
-    -1px 0 1px rgba(255, 255, 255, 0.85),
-    inset 3px 0 28px rgba(255, 255, 255, 0.12);
+    -24px 0 60px rgba(0, 0, 0, 0.6),
+    -6px 0 20px rgba(0, 0, 0, 0.4),
+    -1px 0 1px rgba(255, 255, 255, 0.8),
+    inset 2px 0 20px rgba(255, 255, 255, 0.1);
   pointer-events: none;
   overflow: hidden;
+  will-change: transform;
 }
 
 /* Prismatic Ambient Glow */
@@ -3076,8 +3077,8 @@ a.btn.discord-nav-btn:hover {
     transparent 100%
   );
   box-shadow: 
-    0 0 24px 3px rgba(255, 255, 255, 0.55),
-    0 0 6px 1.5px rgba(255, 255, 255, 0.9);
+    0 0 20px 2px rgba(255, 255, 255, 0.5),
+    0 0 5px 1px rgba(255, 255, 255, 0.85);
   pointer-events: none;
 }
 
@@ -3096,23 +3097,21 @@ a.btn.discord-nav-btn:hover {
   pointer-events: none;
 }
 
-/* ---------- Состояния переключения страниц (Apple Spring & Parallax Physics) ---------- */
+/* ---------- Состояния переключения страниц (Apple Spring & Parallax Physics - Optimized) ---------- */
 
 /* При переходе: жидкое стекло плавно накрывает экран справа налево с физикой пружины Apple */
 body.page-leaving .page-wave-transition {
   visibility: visible;
-  animation: liquidGlassCover 0.40s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: liquidGlassCover 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Parallax Depth: текущая страница мягко уходит вглубь и сдвигается влево */
+/* Parallax Depth: текущая страница легко сдвигается влево без тяжелого фильтра blur */
 body.page-leaving > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
-  transform: translate3d(-50px, 0, 0) scale(0.988);
-  filter: blur(8px) brightness(0.88);
-  opacity: 0.82;
+  transform: translate3d(-24px, 0, 0);
+  opacity: 0.88;
   transition: 
-    transform 0.40s cubic-bezier(0.16, 1, 0.3, 1), 
-    filter 0.40s cubic-bezier(0.16, 1, 0.3, 1), 
-    opacity 0.36s ease;
+    transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), 
+    opacity 0.32s ease;
   pointer-events: none !important;
 }
 
@@ -3128,12 +3127,12 @@ body.page-leaving > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.
 /* Когда загрузило: быстро и чисто стягиваем жидкое стекло обратно вправо */
 body.page-entering .page-wave-transition {
   visibility: visible;
-  animation: liquidGlassRetreat 0.30s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: liquidGlassRetreat 0.28s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 /* Новая страница плавно заезжает из микро-глубины в резкость */
 body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(.tactical-cursor-ring) {
-  animation: pageParallaxSettle 0.30s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: pageParallaxSettle 0.28s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes liquidGlassRetreat {
@@ -3147,13 +3146,11 @@ body.page-entering > *:not(.page-wave-transition):not(.tactical-cursor-dot):not(
 
 @keyframes pageParallaxSettle {
   0% {
-    transform: translate3d(24px, 0, 0) scale(0.994);
-    filter: blur(5px) brightness(0.96);
-    opacity: 0.9;
+    transform: translate3d(16px, 0, 0);
+    opacity: 0.94;
   }
   100% {
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0px) brightness(1);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
   }
 }
@@ -3372,3 +3369,70 @@ body.cursor-active .tactical-cursor-dot {
 .punishment-remove-box b {
   color: var(--text, #f3f4f6);
 }
+
+/* ---------- 8. MartinWSecurityWeb Cyber Widget in Dev Panel ---------- */
+.dev-panel-security {
+  background: rgba(18, 12, 16, 0.55);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.dev-sec-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f87171;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.dev-sec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+.dev-sec-dot.locked {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: mwBlink 1.2s infinite ease-in-out;
+}
+.btn-sec-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+.btn-sec-lock {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+.btn-sec-lock:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+}
+.btn-sec-unlock {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+}
+.btn-sec-unlock:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.5);
+}
+

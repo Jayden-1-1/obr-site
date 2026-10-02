@@ -68,11 +68,22 @@ app.use(
   })
 );
 
+const {
+  martinwSecurityMiddleware,
+  registerSecurityRoutes,
+} = require('./middleware/security');
+
 // Lightweight Health / Keep-Alive Ping
 app.get('/api/ping', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({ ok: true, uptime: Math.floor(process.uptime()), timestamp: Date.now() });
 });
+
+// MartinWSecurityWeb Shield Telemetry & Operator Control Endpoints
+registerSecurityRoutes(app);
+
+// MartinWSecurityWeb WAF, Adaptive Rate Limiting & Lockdown Middleware
+app.use(martinwSecurityMiddleware());
 
 // Static Assets with Cache-Control headers for rapid repeat loads
 app.use(
