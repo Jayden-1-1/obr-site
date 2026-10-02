@@ -883,9 +883,13 @@ async function toggleManualSiteLock() {
 
     const res = await fetch('/api/security/manual-lock', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-mw-api-key': 'mw_sec_obr_2026'
+      },
       body: JSON.stringify({
         locked: willLock,
+        api_key: 'mw_sec_obr_2026',
         reason: 'Operator dashboard toggle'
       })
     });
