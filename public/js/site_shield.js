@@ -28,7 +28,7 @@
     serverUrl = window.location.origin;
   }
 
-  const POLL_INTERVAL_MS = 5000;
+  const POLL_INTERVAL_MS = 2500;
   let isCurrentlyLocked = false;
   let overlayElement = null;
   let observer = null;

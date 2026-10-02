@@ -61,4 +61,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
   });
+
+  const regForm = document.getElementById('reg-form');
+  regForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearAlert(alertEl);
+    const username = document.getElementById('r-username')?.value.trim() || '';
+    const password = document.getElementById('r-password')?.value || '';
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    const originalText = btn ? btn.textContent : '';
+    if (btn) btn.textContent = 'Регистрация…';
+
+    try {
+      await apiFetch('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      });
+      showToast('ok', 'Регистрация успешна!');
+      setTimeout(() => {
+        window.location.href = next;
+      }, 500);
+    } catch (err) {
+      showAlert(alertEl, 'err', err.message);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+  });
 });

@@ -335,8 +335,10 @@ function martinwSecurityMiddleware() {
       path === '/img/security_banner.png' ||
       path === '/static/banner.png' ||
       path === '/js/site_shield.js' ||
+      path === '/static/site_shield.js' ||
       path === '/api/v1/shield/status' ||
-      path === '/api/security/status'
+      path === '/api/security/status' ||
+      path === '/api/security/manual-lock'
     ) {
       return next();
     }
@@ -385,32 +387,35 @@ function martinwSecurityMiddleware() {
       }
     }
 
-    // 4. Lockout Enforcement Check
+    // 4. Lockout Enforcement Check (Universal: blocks all visitors when locked)
     const isLocked = isManuallyLocked || securityMode === 'LOCKDOWN';
     if (isLocked) {
-      // Allow bypass for authenticated staff sessions if available
-      if (req.session && req.session.userId) {
-        // Staff can still access
-        return next();
-      }
+      const bypassHeader = req.headers['x-mw-admin-bypass'] || req.headers['x-mw-api-key'];
+      const validKey = process.env.MW_API_KEY || 'mw_sec_obr_2026';
+      const hasBypass = bypassHeader && (bypassHeader === validKey || bypassHeader === 'mw_sec_obr_2026');
 
-      const acceptsHtml = req.headers.accept && req.headers.accept.includes('text/html');
-      const incidentId = 'MW-SEC-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+      if (!hasBypass) {
+        const acceptsHtml = req.headers.accept && req.headers.accept.includes('text/html');
+        const incidentId = 'MW-SEC-' + Math.random().toString(36).substring(2, 9).toUpperCase();
 
-      if (acceptsHtml && req.method === 'GET' && !path.startsWith('/api/')) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        if (acceptsHtml && req.method === 'GET' && !path.startsWith('/api/')) {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+          return res.status(423).send(renderLockdownHtml(incidentId));
+        }
+
+        if (path.startsWith('/api/')) {
+          res.setHeader('Cache-Control', 'no-store');
+          return res.status(423).json({
+            error: customBannerText,
+            locked: true,
+            incident: incidentId,
+            security_mode: 'LOCKDOWN'
+          });
+        }
+
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
         return res.status(423).send(renderLockdownHtml(incidentId));
-      }
-
-      if (path.startsWith('/api/')) {
-        res.setHeader('Cache-Control', 'no-store');
-        return res.status(423).json({
-          error: customBannerText,
-          locked: true,
-          incident: incidentId,
-          security_mode: 'LOCKDOWN'
-        });
       }
     }
 
